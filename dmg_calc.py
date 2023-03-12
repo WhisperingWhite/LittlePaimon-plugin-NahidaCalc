@@ -300,7 +300,7 @@ class DmgCalc:
 
     def get_dmg(self):
         """直伤伤害"""
-        return int(self.get_amp_reac_dmg("exp")), int(self.get_amp_reac_dmg("crit"))
+        return self.get_amp_reac_dmg("exp"), self.get_amp_reac_dmg("crit")
 
     def get_trans_reac_dmg(self):
         """

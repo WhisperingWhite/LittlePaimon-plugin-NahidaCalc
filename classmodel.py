@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, parse_raw_as
+import json
 
 
 class DmgBonus(BaseModel):
@@ -47,21 +48,21 @@ class DmgBonus(BaseModel):
 
     def get(self, key: str):
         match key:
-            case x if x in ["物理", "phy"]:
+            case x if x in ["物理", "phy", "物伤"]:
                 return self.phy
-            case x if x in ["火", "pyro"]:
+            case x if x in ["火", "pyro", "火伤"]:
                 return self.pyro
-            case x if x in ["雷", "electro"]:
+            case x if x in ["雷", "electro", "雷伤"]:
                 return self.electro
-            case x if x in ["水", "hydro"]:
+            case x if x in ["水", "hydro", "水伤"]:
                 return self.hydro
-            case x if x in ["草", "dendro"]:
+            case x if x in ["草", "dendro", "草伤"]:
                 return self.dendro
-            case x if x in ["风", "anemo"]:
+            case x if x in ["风", "anemo", "风伤"]:
                 return self.anemo
-            case x if x in ["岩", "geo"]:
+            case x if x in ["岩", "geo", "岩伤"]:
                 return self.geo
-            case x if x in ["冰", "cryo"]:
+            case x if x in ["冰", "cryo", "冰伤"]:
                 return self.cryo
             case _:
                 return 0.0
@@ -69,21 +70,21 @@ class DmgBonus(BaseModel):
     def set(self, dmgprops: dict):
         for key, value in dmgprops.items():
             match key:
-                case x if x in ["物理", "phy"]:
+                case x if x in ["物理", "phy", "物伤"]:
                     self.phy = value
-                case x if x in ["火", "pyro"]:
+                case x if x in ["火", "pyro", "火伤"]:
                     self.pyro = value
-                case x if x in ["雷", "electro"]:
+                case x if x in ["雷", "electro", "雷伤"]:
                     self.electro = value
-                case x if x in ["水", "hydro"]:
+                case x if x in ["水", "hydro", "水伤"]:
                     self.hydro = value
-                case x if x in ["草", "dendro"]:
+                case x if x in ["草", "dendro", "草伤"]:
                     self.dendro = value
-                case x if x in ["风", "anemo"]:
+                case x if x in ["风", "anemo", "风伤"]:
                     self.anemo = value
-                case x if x in ["岩", "geo"]:
+                case x if x in ["岩", "geo", "岩伤"]:
                     self.geo = value
-                case x if x in ["冰", "cryo"]:
+                case x if x in ["冰", "cryo", "冰伤"]:
                     self.cryo = value
                 case x if x in ["元素", "elem"]:
                     for k in ["火", "雷", "水", "草", "风", "岩", "冰"]:
@@ -406,6 +407,26 @@ class Info(BaseModel):
     """武器类型"""
 
 
+class BuffList(BaseModel):
+    @classmethod
+    def encode(cls, models: list["BuffInfo"]):
+        return json.dumps(models, default=cls.dict)
+
+    @classmethod
+    def decode(cls, json_data):
+        return parse_raw_as(list[BuffInfo], json_data)
+
+
+class DmgList(BaseModel):
+    @classmethod
+    def encode(cls, models: list["Dmg"]):
+        return json.dumps(models, default=cls.dict)
+
+    @classmethod
+    def decode(cls, json_data):
+        return parse_raw_as(list[Dmg], json_data)
+
+
 class RelicScore(BaseModel):
     """
     圣遗物评分
@@ -432,15 +453,15 @@ class RelicScore(BaseModel):
 
     def get_score(self, key="total"):
         match key:
-            case "flower":
+            case "生之花":
                 return self.flower
-            case "plume":
+            case "死之羽":
                 return self.plume
-            case "sands":
+            case "时之沙":
                 return self.sands
-            case "goblet":
+            case "空之杯":
                 return self.goblet
-            case "circlet":
+            case "理之冠":
                 return self.circlet
             case "total":
                 return self.total_score
@@ -457,3 +478,7 @@ class RelicScore(BaseModel):
                 self.goblet = value
             case "理之冠":
                 self.circlet = value
+
+    @classmethod
+    def decode(cls, json_data):
+        return parse_raw_as(RelicScore, json_data)

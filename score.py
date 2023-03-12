@@ -9,46 +9,46 @@ from .classmodel import Buff, BuffInfo, DmgBonus, PoFValue, RelicScore
 from .role import Role
 
 slot_dict = {
-    "hp_per": 5.83,
-    "hp": 298.75,
-    "atk_per": 5.83,
-    "atk": 19.45,
-    "def_per": 7.29,
-    "def": 23.15,
-    "elem_ma": 23.31,
-    "crit": 3.89,
-    "crit_hurt": 7.77,
-    "charge": 6.48,
-    "heal": 4.49,
-    "elem": 5.83,
-    "phy": 7.29,
+    "生命%": 5.83,
+    "生命": 298.75,
+    "攻击%": 5.83,
+    "攻击": 19.45,
+    "防御%": 7.29,
+    "防御": 23.15,
+    "精通": 23.31,
+    "暴击": 3.89,
+    "暴伤": 7.77,
+    "充能": 6.48,
+    "治疗": 4.49,
+    "元素": 5.83,
+    "物伤": 7.29,
 }
 """词条最大成长值"""
 
 sub_prop = [
-    "hp_per",
-    "hp",
-    "atk_per",
-    "atk",
-    "def_per",
-    "def",
-    "elem_ma",
-    "crit",
-    "crit_hurt",
-    "charge",
+    "生命%",
+    "生命",
+    "攻击%",
+    "攻击",
+    "防御%",
+    "防御",
+    "精通",
+    "暴击",
+    "暴伤",
+    "充能",
 ]
-sands_main_prop = ["hp_per", "atk_per", "def_per", "elem_ma", "charge"]
-goblet_main_prop = ["hp_per", "atk_per", "def_per", "elem_ma", "elem", "phy"]
+sands_main_prop = ["生命%", "攻击%", "防御%", "精通", "充能"]
+goblet_main_prop = ["生命%", "攻击%", "防御%", "精通", "元素", "物伤"]
 circlet_main_prop = [
-    "hp_per",
-    "atk_per",
-    "def_per",
-    "elem_ma",
-    "crit",
-    "crit_hurt",
-    "heal",
+    "生命%",
+    "攻击%",
+    "防御%",
+    "精通",
+    "暴击",
+    "暴伤",
+    "治疗",
 ]
-element = ["pyro", "electro", "hydro", "dendro", "anemo", "geo", "cryo"]
+element = ["火伤", "雷伤", "水伤", "草伤", "风伤", "岩伤", "冰伤"]
 
 
 @run_sync
@@ -120,10 +120,12 @@ def get_score(role: Role, true_role: Role, type: str):
     """计算圣遗物分数"""
     valid_prop = role.valid_prop
     threshold = role.dmg_list[0].weight / 100
-    if threshold > role.prop.recharge and "charge" not in valid_prop:
-        valid_prop.append("charge")
+    if threshold > role.prop.recharge and "充能" not in valid_prop:
+        valid_prop.append("充能")
+    elif threshold <= role.prop.recharge and "充能" in valid_prop:
+        valid_prop = [p for p in valid_prop if p != "充能"]
     max_charge = max(
-        np.ceil((threshold - role.prop.recharge) / (slot_dict["charge"] / 100)), 0
+        np.ceil((threshold - role.prop.recharge) / (slot_dict["充能"] / 100)), 0
     )
 
     main_prop_list = get_main_prop(valid_prop, type)
@@ -141,7 +143,7 @@ def get_score(role: Role, true_role: Role, type: str):
                                 sub_prop_dist |= {p: [i + 1, j + 1, m + 1, n + 1][idx]}
                             if (
                                 sum(sub_prop_dist.values()) == len(sub_prop_dist) + 5
-                                and sub_prop_dist.get("charge", 0) <= max_charge
+                                and sub_prop_dist.get("充能", 0) <= max_charge
                             ):
                                 prop_list.append(main_prop | sub_prop_dist)
     buff_list, prop_valid_list = get_buff(prop_list)
@@ -155,7 +157,7 @@ def get_score(role: Role, true_role: Role, type: str):
         """
         if x < threshold:
             b = 5
-            return 1 / (1 + 7.29 / slot_dict["charge"] * (threshold - x))
+            return 1 / (1 + 7.29 / slot_dict["充能"] * (threshold - x))
         return 1
 
     dmg_base = role.dmg()
@@ -193,15 +195,9 @@ def get_score(role: Role, true_role: Role, type: str):
             max_score = est_score
         scores.append(est_score)
 
-    # if type in ["生之花", "死之羽"]:
     if max_score == 0:
         return 0
     return (true_score - max_main_score) / (max_score - max_main_score) * 6
-    # if true_score <= max_main_score and max_main_score != 0:
-    #     return true_score / max_main_score * 2
-    # else:
-    #     return (true_score - max_main_score) / (max_score - max_main_score) * 4 + 2
-    # return true_score / max_score * 60
 
 
 def get_main_prop(valid_prop: list[str], type: str):
@@ -209,9 +205,9 @@ def get_main_prop(valid_prop: list[str], type: str):
     output: list[dict[str, int]] = []
     match type:
         case "生之花":
-            return [{"hp": 16}]
+            return [{"生命": 16}]
         case "死之羽":
-            return [{"atk": 16}]
+            return [{"攻击": 16}]
         case "时之沙":
             for prop in valid_prop:
                 if prop in sands_main_prop:
@@ -254,15 +250,11 @@ def get_buff(props: list[dict[str, int]]):
     buff_list: list[list[BuffInfo]] = []
     relic_list: list[dict[str, int]] = []
     for prop in props:
-        if (hp := prop.get("hp", 0)) != 16 and prop.get("hp_per", 0) != 8 and hp > 1:
+        if (hp := prop.get("生命", 0)) != 16 and prop.get("生命%", 0) != 8 and hp > 1:
             continue
-        if (
-            (atk := prop.get("atk", 0)) != 16
-            and prop.get("atk_per", 0) != 8
-            and atk > 1
-        ):
+        if (atk := prop.get("攻击", 0)) != 16 and prop.get("攻击%", 0) != 8 and atk > 1:
             continue
-        if prop.get("def_per", 0) != 8 and prop.get("def", 0) > 1:
+        if prop.get("防御%", 0) != 8 and prop.get("防御", 0) > 1:
             continue
         buff_list.append(create_buff(prop))
         relic_list.append(prop)
@@ -276,35 +268,33 @@ def create_buff(dic: dict[str, int]):
     )
     for key, value in dic.items():
         match key:
-            case "hp":
-                buff.buff.hp += PoFValue(fix=slot_dict["hp"] * value)
-            case "hp_per":
-                buff.buff.hp += PoFValue(percent=slot_dict["hp_per"] * value / 100)
-            case "atk":
-                buff.buff.atk += PoFValue(fix=slot_dict["atk"] * value)
-            case "atk_per":
-                buff.buff.atk += PoFValue(percent=slot_dict["atk_per"] * value / 100)
-            case "def":
-                buff.buff.defense += PoFValue(fix=slot_dict["def"] * value)
-            case "def_per":
-                buff.buff.defense += PoFValue(
-                    percent=slot_dict["def_per"] * value / 100
-                )
-            case "elem_ma":
-                buff.buff.elem_mastery += slot_dict["elem_ma"] * value
-            case "crit":
-                buff.buff.crit_rate += slot_dict["crit"] * value / 100
-            case "crit_hurt":
-                buff.buff.crit_dmg += slot_dict["crit_hurt"] * value / 100
-            case "charge":
-                buff.buff.recharge += slot_dict["charge"] * value / 100
-            case "heal":
-                buff.buff.healing += slot_dict["heal"] * value / 100
+            case "生命":
+                buff.buff.hp += PoFValue(fix=slot_dict["生命"] * value)
+            case "生命%":
+                buff.buff.hp += PoFValue(percent=slot_dict["生命%"] * value / 100)
+            case "攻击":
+                buff.buff.atk += PoFValue(fix=slot_dict["攻击"] * value)
+            case "攻击%":
+                buff.buff.atk += PoFValue(percent=slot_dict["攻击%"] * value / 100)
+            case "防御":
+                buff.buff.defense += PoFValue(fix=slot_dict["防御"] * value)
+            case "防御%":
+                buff.buff.defense += PoFValue(percent=slot_dict["防御%"] * value / 100)
+            case "精通":
+                buff.buff.elem_mastery += slot_dict["精通"] * value
+            case "暴击":
+                buff.buff.crit_rate += slot_dict["暴击"] * value / 100
+            case "暴伤":
+                buff.buff.crit_dmg += slot_dict["暴伤"] * value / 100
+            case "充能":
+                buff.buff.recharge += slot_dict["充能"] * value / 100
+            case "治疗":
+                buff.buff.healing += slot_dict["治疗"] * value / 100
             case x if x in element:
                 buff.buff.elem_dmg_bonus += DmgBonus().set(
-                    {key: slot_dict["elem"] * value / 100}
+                    {key: slot_dict["元素"] * value / 100}
                 )
-            case "phy":
-                buff.buff.elem_dmg_bonus = DmgBonus(phy=slot_dict["phy"] * value / 100)
+            case "物伤":
+                buff.buff.elem_dmg_bonus = DmgBonus(phy=slot_dict["物伤"] * value / 100)
 
     return buff

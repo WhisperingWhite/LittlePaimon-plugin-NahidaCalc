@@ -77,14 +77,21 @@ class Ganyu(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    category: str = ""
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["融甘", "冻甘"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
         match self.category:
             case "融甘":
-                return ["atk", "atk_per", "cryo", "crit", "crit_hurt", "elem_ma"]
+                return ["攻击", "攻击%", "冰伤", "暴击", "暴伤", "精通"]
             case "冻甘":
-                return ["atk", "atk_per", "cryo", "crit", "crit_hurt"]
+                return ["攻击", "攻击%", "冰伤", "暴击", "暴伤"]
+            case _:
+                return ["攻击", "攻击%", "冰伤", "暴击", "暴伤"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -154,7 +161,7 @@ class Ganyu(Role):
                 index=1,
                 source="A",
                 name="流天射术·霜华矢",
-                dsc="A二段蓄力两段",
+                dsc="A二段蓄力",
                 weight=weights.get("流天射术·霜华矢", 0),
                 exclude_buff=ex_buffs.get("流天射术·霜华矢", []),
             ),
@@ -162,7 +169,7 @@ class Ganyu(Role):
                 index=2,
                 source="A",
                 name="流天射术·霜华矢-融化",
-                dsc="A二段蓄力两段",
+                dsc="A二段蓄力融化",
                 weight=weights.get("流天射术·霜华矢-融化", 0),
                 exclude_buff=ex_buffs.get("流天射术·霜华矢-融化", []),
             ),
@@ -189,10 +196,9 @@ class Ganyu(Role):
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
-        self.category = style_name
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
             case "融甘":
                 return {
                     "充能效率阈值": 100,
@@ -209,7 +215,7 @@ class Ganyu(Role):
                 }
             case _:
                 return {
-                    "充能效率阈值": 110,
+                    "充能效率阈值": 100,
                     "流天射术·霜华矢": 5,
                     "流天射术·霜华矢-融化": -1,
                     "降众天华": 10,

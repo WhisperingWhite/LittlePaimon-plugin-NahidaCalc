@@ -8,7 +8,6 @@ from LittlePaimon.database import (
     Weapon,
 )
 from LittlePaimon.utils.files import load_json
-from LittlePaimon.utils.genshin import GenshinTools
 from LittlePaimon.utils.path import JSON_DATA
 
 from ..classmodel import BuffInfo, Dmg, DmgBonus, Info, Buff
@@ -16,6 +15,7 @@ from ..dmg_calc import DmgCalc
 from ..relics import artifacts, artifacts_setting
 from ..resonance import resonance, resonance_setting
 from ..weapon import weapon_buff, weapon_setting
+from ..Nahidatools import get_relicsuit
 
 
 class Calculator(DmgCalc):
@@ -106,10 +106,10 @@ class Role:
             self.info = Info(
                 level=charc.level,
                 element=charc.element,
-                # constellation=len(charc.constellation.constellation_list),
-                constellation=6,
-                # ascension = charc.promote_level,
-                ascension=6,
+                constellation=len(charc.constellation.constellation_list),
+                # constellation=6,
+                ascension=charc.promote_level,
+                # ascension=6,
                 suit=get_relicsuit(charc.artifacts),
                 region=charc.region,
                 weapon_type=charc.weapon.type,
@@ -148,6 +148,7 @@ class Role:
 
     category: str = ""
     """角色所属的流派，影响圣遗物分数计算"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
@@ -248,7 +249,6 @@ class Role:
     ):
         """获取伤害列表"""
         # if weights == {}:
-        weights = self.weights_init()
         self.weight(weights, ex_buffs)
         return self.dmg()
 
@@ -272,34 +272,3 @@ class Role:
             dsc="冰雷反应触发12秒内，物抗-40%",
             resist_reduction=DmgBonus(phy=0.4),
         )
-
-
-def reserve_setting(buff_list: list[BuffInfo]):
-    """保留设置"""
-    labels: dict[str, str] = {}
-    for buff in buff_list:
-        labels |= {buff.name: buff.setting.label}
-    return labels
-
-
-def reserve_weight(dmg_list: list[Dmg]):
-    """保留权重"""
-    weights: dict[str, int] = {}
-    for dmg in dmg_list:
-        weights |= {dmg.name: dmg.weight}
-    return weights
-
-
-def reserve_exbuffs(dmg_list: list[Dmg]):
-    """保留无效增益"""
-    ex_buffs: dict[str, int] = {}
-    for dmg in dmg_list:
-        ex_buffs |= {dmg.name: dmg.exclude_buff}
-    return ex_buffs
-
-
-def get_relicsuit(relics: Artifacts):
-    output: dict[str, int] = {}
-    for suit, _ in GenshinTools.get_artifact_suit(relics):
-        output.update({suit: output.get(suit, 0) + 2})
-    return output

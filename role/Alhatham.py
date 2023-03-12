@@ -141,8 +141,8 @@ class Alhatham(Role):
                     BuffInfo(
                         source=f"{self.name}-C4",
                         name="义贯(队伍)",
+                        buff_range="propbuff",
                         buff_type="party",
-                        buff_type="propbuff",
                         setting=BuffSetting(
                             label=labels.get("义贯", "4"),
                         ),

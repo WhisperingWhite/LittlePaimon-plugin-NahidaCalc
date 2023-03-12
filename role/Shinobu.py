@@ -1,17 +1,9 @@
-from ..classmodel import (
-    Buff,
-    BuffInfo,
-    BuffSetting,
-    Dmg,
-    DmgBonus,
-    Multiplier,
-    FixValue,
-)
+from ..classmodel import Buff, BuffInfo, Dmg, Multiplier, FixValue
 from ._model import Role
 
 
-class Cyno(Role):
-    name = "赛诺"
+class Shinobu(Role):
+    name = "忍"
 
     def buff_T1(self, buff_info: BuffInfo):
         """破笼之志"""
