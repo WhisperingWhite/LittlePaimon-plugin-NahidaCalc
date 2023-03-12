@@ -117,13 +117,13 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "绝缘4":
                 dmg_bonus = min(prop.recharge * 0.25, 0.75)
                 buff.buff = Buff(
-                    dsc=f"基于充能的25%，元素爆发增伤(+{dmg_bonus*100:.1f})%，至多75%",
+                    dsc=f"基于充能，元素爆发增伤(+{dmg_bonus*100:.1f}%)，至多75%",
                     target="Q",
                     dmg_bonus=dmg_bonus,
                 )
             case "追忆4":
                 buff.buff = Buff(
-                    dsc="施放元素战技10秒内，流失15点能量，普攻、重击和下落增伤+50%",
+                    dsc="施放元素战技10秒内，普攻、重击和下落增伤+50%",
                     target=["NA", "CA", "PA"],
                     dmg_bonus=0.5,
                 )

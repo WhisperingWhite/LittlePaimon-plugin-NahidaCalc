@@ -3,8 +3,8 @@ from ._model import Role
 from ..dmg_calc import DmgCalc
 
 
-class Mona(Role):
-    name = "莫娜"
+class Yelan(Role):
+    name = "夜兰"
 
     def buff_T1(self, buff_info: BuffInfo):
         """猜先有方"""
@@ -16,7 +16,7 @@ class Mona(Role):
                 setting.state, s = "×", 0
         hp_per = 0.3 if s == 4 else s * 0.06
         buff_info.buff = Buff(
-            dsc=f"队伍中存在{s}种元素类型，生命值上限+{hp_per*100}%({self.prop.hp_base*hp_per})",
+            dsc=f"队伍中存在{s}种元素，生命上限+{hp_per*100}%({self.prop.hp_base*hp_per:.0f})",
             hp=PoFValue(percent=hp_per),
         )
 
@@ -46,7 +46,7 @@ class Mona(Role):
                 setting.state, s = "×", 0
         dmg_bonus = min(s * 0.035, 50)
         buff_info.buff = Buff(
-            dsc=f"玄掷玲珑存在期间，场上角色增伤+{dmg_bonus*100}%",
+            dsc=f"玄掷玲珑存在期间，场上角色增伤+{dmg_bonus*100:.1f}%",
             dmg_bonus=dmg_bonus,
         )
 

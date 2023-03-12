@@ -107,7 +107,7 @@ class Kokomi(Role):
         for buff in buff_list:
             match buff.name:
                 case "真珠御呗":
-                    self.buff_T2(buff)
+                    self.buff_T2(buff, prop)
                 case "波起云海":
                     self.buff_C2(buff)
                 case "珊瑚一心":

@@ -70,7 +70,7 @@ class Diona(Role):
                         source=f"{self.name}-C6",
                         name="猫尾打烊之时",
                         buff_range="active",
-                        buff_range="propbuff",
+                        buff_type="propbuff",
                         setting=BuffSetting(
                             dsc="最烈特调领域内，①生命值低于50%：受治疗+30%；②生命值高于50%：精通+200",
                             label=labels.get("猫尾打烊之时", "2"),

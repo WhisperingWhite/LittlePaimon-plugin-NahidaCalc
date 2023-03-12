@@ -2,8 +2,8 @@ from ..classmodel import Dmg, Buff, BuffInfo, BuffSetting, FixValue, Multiplier
 from ._model import Role
 
 
-class Feiyan(Role):
-    name = "烟绯"
+class Tohma(Role):
+    name = "托马"
 
     def buff_T1(self, buff_info: BuffInfo):
         """甲衣交叠"""
@@ -62,7 +62,7 @@ class Feiyan(Role):
                 BuffInfo(
                     source=f"{self.name}-T1",
                     name="甲衣交叠",
-                    buff_type="all",
+                    buff_range="all",
                     buff_type="propbuff",
                     setting=BuffSetting(
                         dsc="获取或刷新烈烧佑命护盾叠层，⓪~⑤每层护盾强效+5%",
