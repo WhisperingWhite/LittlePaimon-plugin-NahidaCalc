@@ -1,4 +1,4 @@
-from ..classmodel import Buff, BuffInfo, BuffSetting, PoFValue, FixValue, Info
+from ..classmodel import Buff, BuffInfo, BuffSetting, PoFValue, Info
 from LittlePaimon.database import Weapon
 
 from ..dmg_calc import DmgCalc
