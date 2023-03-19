@@ -6,7 +6,7 @@ from LittlePaimon.utils.message import MessageBuild
 from LittlePaimon.utils.path import ENKA_RES, RESOURCE_BASE_PATH
 from .classmodel import BuffInfo, Dmg
 from .Nahidatools import get_rank, check_effective
-from .database import Data
+from .database import CalcInfo
 
 element_type = ["物理", "火元素", "雷元素", "水元素", "草元素", "风元素", "岩元素", "冰元素"]
 TALENT_ICON = RESOURCE_BASE_PATH / "talent"
@@ -19,7 +19,7 @@ ICON = RESOURCE_BASE_PATH / "icon"
 async def draw_chara_detail(
     uid: str,
     info: Character,
-    data: Data,
+    data: CalcInfo,
 ):
     img = PMImage(await load_image(ENKA_RES / f"背景_{info.element}.png"))
 
@@ -292,9 +292,7 @@ async def draw_chara_detail(
                 21 + w,
                 230 + h + 50 * j,
                 color="gold"
-                if check_effective(
-                    artifact.prop_list[j].name, data.valid_prop
-                )
+                if check_effective(artifact.prop_list[j].name, data.valid_prop)
                 else "#afafaf",
                 font=fm.get("hywh.ttf", 25),
             )
@@ -307,9 +305,7 @@ async def draw_chara_detail(
                 307 + w,
                 230 + h + 50 * j,
                 color="gold"
-                if check_effective(
-                    artifact.prop_list[j].name, data.valid_prop
-                )
+                if check_effective(artifact.prop_list[j].name, data.valid_prop)
                 else "#afafaf",
                 font=fm.get("number.ttf", 25),
                 align="right",

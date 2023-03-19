@@ -221,7 +221,7 @@ def Catalyst_setting(weapon: Weapon, info: Info, labels: dict, name: str):
                     buff_type="propbuff",
                     setting=BuffSetting(
                         dsc=f"攻击命中||⓪（×）：无增益；①~⑤每层：攻击力+{3+1*weapon.promote_level}%,护盾下效果翻倍",
-                        label=labels.get("尘世之锁-金璋皇极", "5,有护盾"),
+                        label=labels.get("尘世之锁-金璋皇极", "5/有护盾"),
                     ),
                 )
             )

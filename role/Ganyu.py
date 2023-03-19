@@ -15,6 +15,8 @@ class Ganyu(Role):
 
     def buff_T2(self, buff_info: BuffInfo):
         """天地交泰"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="降众天华领域内,场上角色冰伤+20%",
             elem_dmg_bonus=DmgBonus(cryo=0.2),
@@ -22,6 +24,8 @@ class Ganyu(Role):
 
     def buff_C1(self, buff_info: BuffInfo):
         """饮露"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="霜华矢命中6秒内，冰抗-15%",
             resist_reduction=DmgBonus(cryo=0.15),
@@ -111,6 +115,7 @@ class Ganyu(Role):
                         name="天地交泰",
                         buff_range="active",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("天地交泰", "○")),
                     )
                 )
         # 命座
@@ -120,6 +125,7 @@ class Ganyu(Role):
                     source=f"{self.name}-C1",
                     name="饮露",
                     buff_range="all",
+                    setting=BuffSetting(label=labels.get("饮露", "○")),
                 )
             )
             if self.info.constellation >= 4:

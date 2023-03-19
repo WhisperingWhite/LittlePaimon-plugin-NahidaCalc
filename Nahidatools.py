@@ -1,6 +1,7 @@
-from LittlePaimon.utils.genshin import GenshinTools
-from .classmodel import BuffInfo, Dmg
 from LittlePaimon.database import Artifacts
+from LittlePaimon.utils.genshin import GenshinTools
+
+from .classmodel import BuffInfo, Dmg
 
 
 def reserve_setting(buff_list: list[BuffInfo]):

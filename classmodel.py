@@ -325,11 +325,12 @@ class BuffSetting(BaseModel):
     增益设置
     """
 
-    dsc: str = "此增益为常驻增益"
+    dsc: str = "此增益为常驻增益，⓪关①开"
     """描述"""
-    label: str = ""
+    label: str = "○"
     """设置"""
     state: str = "✓"
+    """状态"""
 
 
 class BuffInfo(BaseModel):

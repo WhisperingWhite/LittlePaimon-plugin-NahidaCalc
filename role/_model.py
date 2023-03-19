@@ -1,5 +1,8 @@
-from nonebot.utils import run_sync
+import typing
 from asyncio import run
+
+from nonebot.utils import run_sync
+
 from LittlePaimon.database import (
     Artifacts,
     Character,
@@ -10,12 +13,21 @@ from LittlePaimon.database import (
 from LittlePaimon.utils.files import load_json
 from LittlePaimon.utils.path import JSON_DATA
 
-from ..classmodel import BuffInfo, Dmg, DmgBonus, Info, Buff
+from ..classmodel import Buff, BuffInfo, Dmg, DmgBonus, Info, RelicScore
 from ..dmg_calc import DmgCalc
+from ..Nahidatools import (
+    get_relicsuit,
+    reserve_setting,
+    reserve_weight,
+    reserve_exbuffs,
+)
 from ..relics import artifacts, artifacts_setting
 from ..resonance import resonance, resonance_setting
 from ..weapon import weapon_buff, weapon_setting
-from ..Nahidatools import get_relicsuit
+from ..score import get_scores
+
+if typing.TYPE_CHECKING:
+    from ..database import CalcInfo
 
 
 class Calculator(DmgCalc):
@@ -29,7 +41,8 @@ class Calculator(DmgCalc):
         prop: CharacterProperty,
         level=90,
     ) -> None:
-        super().__init__(prop, level)
+        if prop:
+            super().__init__(prop, level)
 
     def update_buff(self, buffs: list[BuffInfo]):
         self.buffs = buffs
@@ -92,7 +105,7 @@ class Role:
     info: Info
     """杂项信息"""
 
-    def __init__(self, charc: Character = None) -> None:
+    def __init__(self, charc: Character = None, data: "CalcInfo" = None) -> None:
         if charc:
             self.artifacts = charc.artifacts
             self.weapon = charc.weapon
@@ -106,7 +119,7 @@ class Role:
             self.info = Info(
                 level=charc.level,
                 element=charc.element,
-                constellation=len(charc.constellation.constellation_list),
+                constellation=len(charc.constellation),
                 # constellation=6,
                 ascension=charc.promote_level,
                 # ascension=6,
@@ -114,6 +127,11 @@ class Role:
                 region=charc.region,
                 weapon_type=charc.weapon.type,
             )
+            self.buffs = data.buffs
+            self.dmg_list = data.dmgs
+            self.partner = data.partner
+            if data.category != "":
+                self.category = data.category
 
     def get_scaler(self, skill_name: str, skill_level: int, *attributes: str):
         """获取倍率"""
@@ -141,6 +159,8 @@ class Role:
     """增益"""
     dmg_list: list[Dmg] = []
     """伤害"""
+    scores: RelicScore = RelicScore()
+    """圣遗物评分"""
 
     def create_calc(self):
         """创建一个伤害计算器"""
@@ -148,6 +168,9 @@ class Role:
 
     category: str = ""
     """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list[str] = []
+    """可选流派"""
+
 
     @property
     def valid_prop(self) -> list[str]:
@@ -179,10 +202,14 @@ class Role:
                 return {}
 
     @run_sync
-    def update_setting(self, labels: dict[str, str] = {}):
+    def update_setting(self, labels: dict[str, str] = {}, old_buffs: list = None):
         """
         获取人物增益设定
         """
+        if old_buffs is None:
+            labels = reserve_setting(self.buffs)
+        else:
+            labels = reserve_setting(old_buffs)
         self.buffs = []
         # 共鸣增益设置
         self.buffs.extend(resonance_setting(self.resonance, labels))
@@ -244,13 +271,21 @@ class Role:
         return self.buffs
 
     @run_sync
-    def update_dmg(
-        self, weights: dict[str, int] = {}, ex_buffs: dict[str, list[str]] = {}
-    ):
+    def update_dmg(self, is_new: bool = False):
         """获取伤害列表"""
-        # if weights == {}:
+        if is_new:
+            weights = self.weights_init()
+        else:
+            weights = reserve_weight(self.dmg_list)
+        ex_buffs = reserve_exbuffs(self.dmg_list)
         self.weight(weights, ex_buffs)
         return self.dmg()
+
+    @run_sync
+    def update_scores(self):
+        """获取圣遗物评分"""
+        self.scores = get_scores(self)
+        return self.scores
 
     def get_party_buffs(self):
         output_buff: list[BuffInfo] = []

@@ -93,7 +93,31 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             # ============================
             # ************四星*************
             # ============================
-
+            # 破魔之弓
+            case "破魔之弓-浅濑之弭(普攻)":
+                match setting.label:
+                    case "1":
+                        setting.state, s = "满能量", 2
+                    case _:
+                        setting.state, s = "缺能量", 1
+                dmg_bonus = (0.12 + 0.04 * weapon.promote_level) * s
+                buff_info.buff = Buff(
+                    dsc=f"普攻增伤+{dmg_bonus:.0%}%",
+                    target="NA",
+                    dmg_bonus=dmg_bonus,
+                )
+            case "破魔之弓-浅濑之弭(重击)":
+                match setting.label:
+                    case "1":
+                        setting.state, s = "满能量", 2
+                    case _:
+                        setting.state, s = "缺能量", 1
+                dmg_bonus = (0.09 + 0.03 * weapon.promote_level) * s
+                buff_info.buff = Buff(
+                    dsc=f"重击增伤+{dmg_bonus:.0%}%",
+                    target="CA",
+                    dmg_bonus=dmg_bonus,
+                )
             # ============================
             # ************三星*************
             # ============================
@@ -119,7 +143,7 @@ def Bow_setting(weapon: Weapon, info: Info, labels: dict, name: str):
             output.append(
                 BuffInfo(
                     source=source,
-                    name="若水·洗濯诸类之形",
+                    name="若水-洗濯诸类之形",
                 )
             )
         case "冬极白星":
@@ -179,7 +203,27 @@ def Bow_setting(weapon: Weapon, info: Info, labels: dict, name: str):
         # ============================
         # ************四星*************
         # ============================
-
+        case "破魔之弓":
+            output.append(
+                BuffInfo(
+                    source=source,
+                    name="破魔之弓-浅濑之弭(普攻)",
+                    setting=BuffSetting(
+                        dsc="①元素能量满时，效果提升1倍",
+                        label=labels.get("破魔之弓-浅濑之弭(普攻)", "1"),
+                    ),
+                )
+            )
+            output.append(
+                BuffInfo(
+                    source=source,
+                    name="破魔之弓-浅濑之弭(重击)",
+                    setting=BuffSetting(
+                        dsc="①元素能量满时，效果提升1倍",
+                        label=labels.get("破魔之弓-浅濑之弭(重击)", "1"),
+                    ),
+                )
+            )
         # ============================
         # ************三星*************
         # ============================

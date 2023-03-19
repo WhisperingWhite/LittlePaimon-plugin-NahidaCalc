@@ -1,7 +1,7 @@
 from tortoise import Tortoise
 
 from . import data
-from .data import Data
+from .data import CalcInfo
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "db.sqlite3"

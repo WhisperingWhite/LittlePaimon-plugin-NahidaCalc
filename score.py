@@ -1,12 +1,14 @@
+import typing
 from copy import deepcopy
 
 import numpy as np
-from nonebot.utils import run_sync
 
 from LittlePaimon.database import Artifact, EquipProperty
 
 from .classmodel import Buff, BuffInfo, DmgBonus, PoFValue, RelicScore
-from .role import Role
+
+if typing.TYPE_CHECKING:
+    from .role import Role
 
 slot_dict = {
     "生命%": 5.83,
@@ -51,8 +53,7 @@ circlet_main_prop = [
 element = ["火伤", "雷伤", "水伤", "草伤", "风伤", "岩伤", "冰伤"]
 
 
-@run_sync
-def get_scores(role: Role):
+def get_scores(role: "Role"):
     """获取圣遗物分数"""
     output = RelicScore()
 
@@ -64,7 +65,7 @@ def get_scores(role: Role):
     return output
 
 
-def take_off_item(role: Role, item: Artifact):
+def take_off_item(role: "Role", item: Artifact):
     """脱圣遗物"""
     new_role = deepcopy(role)
     extract_prop(new_role, item.main_property)
@@ -73,7 +74,7 @@ def take_off_item(role: Role, item: Artifact):
     return new_role
 
 
-def extract_prop(role: Role, slot: EquipProperty):
+def extract_prop(role: "Role", slot: EquipProperty):
     """去除属性"""
     match slot.name:
         case "百分比生命值":
@@ -116,7 +117,7 @@ def extract_prop(role: Role, slot: EquipProperty):
             role.prop.elem_dmg_bonus.geo -= slot.value / 100
 
 
-def get_score(role: Role, true_role: Role, type: str):
+def get_score(role: "Role", true_role: "Role", type: str):
     """计算圣遗物分数"""
     valid_prop = role.valid_prop
     threshold = role.dmg_list[0].weight / 100
@@ -162,7 +163,7 @@ def get_score(role: Role, true_role: Role, type: str):
 
     dmg_base = role.dmg()
 
-    def calc_score(role: Role):
+    def calc_score(role: "Role"):
         dmg_list = role.dmg()
         score = 0.0
         for i, info in enumerate(dmg_list):

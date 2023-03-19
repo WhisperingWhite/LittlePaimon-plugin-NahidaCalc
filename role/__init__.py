@@ -1,3 +1,5 @@
+import typing
+
 from LittlePaimon.database import Character
 from LittlePaimon.utils import logger
 
@@ -15,8 +17,6 @@ from .Candace import Candace
 from .Chongyun import Chongyun
 from .Collei import Collei
 from .Cyno import Cyno
-
-# from .Dehya import Dehya
 from .Diluc import Diluc
 from .Diona import Diona
 from .Dori import Dori
@@ -71,144 +71,150 @@ from .Yoimiya import Yoimiya
 from .Yunjin import Yunjin
 from .Zhongli import Zhongli
 
+if typing.TYPE_CHECKING:
+    from ..database import CalcInfo
 
-def get_role(charc: Character = None) -> Role:
+
+def get_role(
+    charc: Character = None, data: "CalcInfo" = None, name: str = None
+) -> Role:
     """获取角色模型"""
-    match charc.name:
+    if charc:
+        name = charc.name
+    match name:
         case x if x in ["空", "荧"]:
             match charc.element:
                 case "风":
-                    return PlayerWind(charc)
+                    return PlayerWind(charc, data)
                 case "岩":
-                    return PlayerRock(charc)
+                    return PlayerRock(charc, data)
                 case "雷":
-                    return PlayerElectric(charc)
+                    return PlayerElectric(charc, data)
                 case "草":
-                    return PlayerGrass(charc)
+                    return PlayerGrass(charc, data)
         case "安柏":
-            return Ambor(charc)
+            return Ambor(charc, data)
         case "凯亚":
-            return Kaeya(charc)
+            return Kaeya(charc, data)
         case "丽莎":
-            return Lisa(charc)
+            return Lisa(charc, data)
         case "芭芭拉":
-            return Barbara(charc)
+            return Barbara(charc, data)
         case "雷泽":
-            return Razor(charc)
+            return Razor(charc, data)
         case "香菱":
-            return Xiangling(charc)
+            return Xiangling(charc, data)
         case "北斗":
-            return Beidou(charc)
+            return Beidou(charc, data)
         case "行秋":
-            return Xingqiu(charc)
+            return Xingqiu(charc, data)
         case "凝光":
-            return Ningguang(charc)
+            return Ningguang(charc, data)
         case "菲谢尔":
-            return Fischl(charc)
+            return Fischl(charc, data)
         case "班尼特":
-            return Bennett(charc)
+            return Bennett(charc, data)
         case "诺艾尔":
-            return Noel(charc)
+            return Noel(charc, data)
         case "重云":
-            return Chongyun(charc)
+            return Chongyun(charc, data)
         case "砂糖":
-            return Sucrose(charc)
+            return Sucrose(charc, data)
         case "琴":
-            return Qin(charc)
+            return Qin(charc, data)
         case "迪卢克":
-            return Diluc(charc)
+            return Diluc(charc, data)
         case "七七":
-            return Qiqi(charc)
+            return Qiqi(charc, data)
         case "莫娜":
-            return Mona(charc)
+            return Mona(charc, data)
         case "刻晴":
-            return Keqing(charc)
+            return Keqing(charc, data)
         case "温迪":
-            return Venti(charc)
+            return Venti(charc, data)
         case "可莉":
-            return Klee(charc)
+            return Klee(charc, data)
         case "迪奥娜":
-            return Diona(charc)
+            return Diona(charc, data)
         case "达达利亚":
-            return Tartaglia(charc)
+            return Tartaglia(charc, data)
         case "辛焱":
-            return Xinyan(charc)
+            return Xinyan(charc, data)
         case "钟离":
-            return Zhongli(charc)
+            return Zhongli(charc, data)
         case "阿贝多":
-            return Albedo(charc)
+            return Albedo(charc, data)
         case "甘雨":
-            return Ganyu(charc)
+            return Ganyu(charc, data)
         case "魈":
-            return Xiao(charc)
+            return Xiao(charc, data)
         case "胡桃":
-            return Hutao(charc)
+            return Hutao(charc, data)
         case "罗莎莉亚":
-            return Rosaria(charc)
+            return Rosaria(charc, data)
         case "烟绯":
-            return Feiyan(charc)
+            return Feiyan(charc, data)
         case "优菈":
-            return Eula(charc)
+            return Eula(charc, data)
         case "枫原万叶":
-            return Kazuha(charc)
+            return Kazuha(charc, data)
         case "神里绫华":
-            return Ayaka(charc)
+            return Ayaka(charc, data)
         case "早柚":
-            return Sayu(charc)
+            return Sayu(charc, data)
         case "宵宫":
-            return Yoimiya(charc)
+            return Yoimiya(charc, data)
         case "埃洛伊":
-            return Aloy(charc)
+            return Aloy(charc, data)
         case "九条沙罗":
-            return Sara(charc)
+            return Sara(charc, data)
         case "雷电将军":
-            return Shougun(charc)
+            return Shougun(charc, data)
         case "珊瑚宫心海":
-            return Kokomi(charc)
+            return Kokomi(charc, data)
         case "托马":
-            return Tohma(charc)
+            return Tohma(charc, data)
         case "五郎":
-            return Gorou(charc)
+            return Gorou(charc, data)
         case "荒泷一斗":
-            return Itto(charc)
+            return Itto(charc, data)
         case "云堇":
-            return Yunjin(charc)
+            return Yunjin(charc, data)
         case "申鹤":
-            return Shenhe(charc)
+            return Shenhe(charc, data)
         case "八重神子":
-            return Yae(charc)
+            return Yae(charc, data)
         case "神里绫人":
-            return Ayato(charc)
+            return Ayato(charc, data)
         case "夜兰":
-            return Yelan(charc)
+            return Yelan(charc, data)
         case "久岐忍":
-            return Shinobu(charc)
+            return Shinobu(charc, data)
         case "鹿野苑平藏":
-            return Heizo(charc)
+            return Heizo(charc, data)
         case "柯莱":
-            return Collei(charc)
+            return Collei(charc, data)
         case "提纳里":
-            return Tighnari(charc)
+            return Tighnari(charc, data)
         case "多莉":
-            return Dori(charc)
+            return Dori(charc, data)
         case "坎蒂丝":
-            return Candace(charc)
+            return Candace(charc, data)
         case "赛诺":
-            return Cyno(charc)
+            return Cyno(charc, data)
         case "妮露":
-            return Nilou(charc)
+            return Nilou(charc, data)
         case "纳西妲":
-            return Nahida(charc)
+            return Nahida(charc, data)
         case "莱依拉":
-            return Layla(charc)
+            return Layla(charc, data)
         case "珐露珊":
-            return Faruzan(charc)
+            return Faruzan(charc, data)
         case "流浪者":
-            return Wanderer(charc)
+            return Wanderer(charc, data)
         case "瑶瑶":
-            return Yaoyao(charc)
+            return Yaoyao(charc, data)
         case "艾尔海森":
-            return Alhatham(charc)
-        case _:
-            logger.info("Nahida", "➤➤", {"角色": charc.name}, "还未更新角色信息", False)
-            return Role(charc)
+            return Alhatham(charc, data)
+    logger.info("Nahida", "➤➤", {"角色": charc.name}, "还未更新角色信息", False)
+    return Role(charc, data)
