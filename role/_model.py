@@ -10,6 +10,7 @@ from LittlePaimon.database import (
     Talents,
     Weapon,
 )
+from LittlePaimon.utils.alias import get_match_alias
 from LittlePaimon.utils.files import load_json
 from LittlePaimon.utils.path import JSON_DATA
 
@@ -17,14 +18,14 @@ from ..classmodel import Buff, BuffInfo, Dmg, DmgBonus, Info, RelicScore
 from ..dmg_calc import DmgCalc
 from ..Nahidatools import (
     get_relicsuit,
+    reserve_exbuffs,
     reserve_setting,
     reserve_weight,
-    reserve_exbuffs,
 )
 from ..relics import artifacts, artifacts_setting
 from ..resonance import resonance, resonance_setting
-from ..weapon import weapon_buff, weapon_setting
 from ..score import get_scores
+from ..weapon import weapon_buff, weapon_setting
 
 if typing.TYPE_CHECKING:
     from ..database import CalcInfo
@@ -127,11 +128,13 @@ class Role:
                 region=charc.region,
                 weapon_type=charc.weapon.type,
             )
-            self.buffs = data.buffs
-            self.dmg_list = data.dmgs
-            self.partner = data.partner
-            if data.category != "":
-                self.category = data.category
+            if data:
+                self.buffs = data.buffs
+                self.dmg_list = data.dmgs
+                self.partners = data.strToRole()
+                self.resonance = data.resonance
+                if data.category != "":
+                    self.category = data.category
 
     def get_scaler(self, skill_name: str, skill_level: int, *attributes: str):
         """获取倍率"""
@@ -145,12 +148,15 @@ class Role:
             return output[0]
         return output
 
-    partner: list["Role"] = []
-    """队友模型"""
+    partners: list["Role"] = []
+    """队友名单"""
 
-    def get_partner(self, list: list["Role"]):
+    def get_partner(self) -> list["Role"]:
         """获取队友"""
-        self.partner = list[0:3]
+        output = []
+        for p in self.partners[:3]:
+            output.extend(get_match_alias(p, "角色"))
+        return output
 
     resonance: str = ""
     """元素共鸣"""
@@ -170,7 +176,6 @@ class Role:
     """角色所属的流派，影响圣遗物分数计算"""
     cate_list: list[str] = []
     """可选流派"""
-
 
     @property
     def valid_prop(self) -> list[str]:
@@ -220,8 +225,8 @@ class Role:
         # 圣遗物增益设置
         self.buffs.extend(artifacts_setting(self.info.suit, labels, self.name))
         # 队友增益设置
-        for p in self.partner:
-            run(p.update_setting(labels))
+        for p in self.partners:
+            run(p.update_setting(labels, old_buffs))
             self.buffs.extend(p.get_party_buffs())
         return self.buffs
 
@@ -231,10 +236,6 @@ class Role:
         获取人物增益
         更新增益列表并且返回团队增益
         """
-        # 队友增益设置
-        for p in self.partner:
-            p.update_buff()
-            self.buffs.extend(p.get_party_buffs())
         # 命座、天赋和技能增益
         for buff_type in ["propbuff", "transbuff", "dmgbuff"]:
             prop = self.create_calc()
@@ -268,6 +269,9 @@ class Role:
             weapon_buff(self.weapon, input_buff, self.info, calc)
             # 圣遗物增益
             artifacts(input_buff, self.info, calc)
+            # 队友增益
+            for p in self.partners:
+                p.buff(input_buff, calc)
         return self.buffs
 
     @run_sync

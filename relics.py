@@ -26,25 +26,20 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             # =======五星========
             case "花神4":
                 match setting.label:
-                    case "0":
-                        setting.state, s = "0层", 0
-                    case "1":
-                        setting.state, s = "1层", 1
-                    case "2":
-                        setting.state, s = "2层", 2
-                    case "3":
-                        setting.state, s = "3层", 3
+                    case x if x in ["1", "2", "3", "4", "5"]:
+                        setting.state, stack = f"{x}层", int(x)
                     case _:
-                        setting.state, s = "4层", 4
-                factor = 0.4 + s * 0.1
-                buff.duration = 10
+                        setting.state, stack = "0层", 0
+                factor = 0.4 + stack * 0.1
                 buff.buff = Buff(
-                    dsc=f"绽放系列反应系数+40%，触发绽放叠层，{s}层额外反应系数+{s*10}%",
+                    dsc=f"绽放系列反应系数+40%，触发绽放叠层，{stack}层额外反应系数+{stack*10}%",
                     reaction_coeff=ReaFactor(
                         bloom=factor, burgeon=factor, hyperbloom=factor
                     ),
                 )
             case "沙阁4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="重击命中15秒内，攻速+10%，普攻、重击与下落增伤+40%",
                     target=["NA", "CA", "PA"],
@@ -52,22 +47,22 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 )
             case "饰金4":
                 match setting.label:
-                    case "0":
-                        setting.state, atk_per, em = "0名异色", 0.42, 0
-                    case "1":
-                        setting.state, atk_per, em = "1名异色", 0.28, 50
-                    case "2":
-                        setting.state, atk_per, em = "2名异色", 0.14, 100
-                    case "3":
-                        setting.state, atk_per, em = "3名异色", 0, 150
+                    case x if x in ["0", "1", "2", "3"]:
+                        setting.state, atk_per, em = (
+                            f"{x}名异色",
+                            0.14 * (3 - int(x)),
+                            50 * int(x),
+                        )
                     case _:
                         setting.state, atk_per, em = "×", 0, 0
                 buff.buff = Buff(
-                    dsc=f"触发元素反应8秒内，元素精通+{em}，攻击力+{atk_per*100}%(+{prop.atk_base*atk_per:.0f})",
+                    dsc=f"触发元素反应8秒内，元素精通+{em}，攻击力+{atk_per:.0%}(+{prop.atk_base*atk_per:.0f})",
                     atk=PoFValue(percent=atk_per),
                     elem_mastery=em,
                 )
             case "深林4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="元素战技或元素爆发命中8秒内，草抗-30%",
                     resist_reduction=0.3,
@@ -80,39 +75,25 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 )
             case "辰砂4-潜光":
                 match setting.label:
-                    case "1":
-                        setting.state, s = "1层", 1
-                    case "2":
-                        setting.state, s = "2层", 2
-                    case "3":
-                        setting.state, s = "3层", 3
-                    case "4":
-                        setting.state, s = "4层", 4
+                    case x if x in ["0", "1", "2", "3", "4"]:
+                        setting.state, stack = f"{x}层", int(x)
                     case _:
-                        setting.state, s = "0层", 0
-                buff.duration = 16
+                        setting.state, stack = "×", 0
+                atk_per = 0.08 + stack * 0.1
                 buff.buff = Buff(
-                    dsc="施放元素爆发16秒内，攻击+8%，生命降低时叠层，"
-                    + f"当前{s}层，额外攻击+{s*10}%(+{prop.atk_base * (0.08+s*0.1):.0f})",
-                    atk=PoFValue(percent=(0.08 + s * 0.1)),
+                    dsc=f"施放元素爆发16秒内，{setting.state}层效果，攻击+{atk_per:.0%}(+{prop.atk_base*atk_per:.0f})",
+                    atk=PoFValue(percent=atk_per),
                 )
             case "华馆4-问答":
                 match setting.label:
-                    case "1":
-                        setting.state, s = "1层", 1
-                    case "2":
-                        setting.state, s = "2层", 2
-                    case "3":
-                        setting.state, s = "3层", 3
-                    case "4":
-                        setting.state, s = "4层", 4
+                    case x if x in ["1", "2", "3", "4"]:
+                        setting.state, stack = f"{x}层", int(x)
                     case _:
-                        setting.state, s = "×", 0
-                buff.duration = 6
+                        setting.state, stack = "×", 0
                 buff.buff = Buff(
-                    dsc=f"岩元素命中获得一层，当前{s}层，岩伤+{s*6}%，防御+{s*6}%(+{prop.def_base*s*0.06:.0f})",
-                    defense=PoFValue(percent=s * 0.06),
-                    elem_dmg_bonus=DmgBonus(geo=s * 0.06),
+                    dsc=f"岩元素命中{setting.state}，岩伤+{stack*6}%，防御+{stack*6}%(+{prop.def_base*stack*0.06:.0f})",
+                    defense=PoFValue(percent=stack * 0.06),
+                    elem_dmg_bonus=DmgBonus(geo=stack * 0.06),
                 )
             case "绝缘4":
                 dmg_bonus = min(prop.recharge * 0.25, 0.75)
@@ -122,6 +103,8 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     dmg_bonus=dmg_bonus,
                 )
             case "追忆4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="施放元素战技10秒内，普攻、重击和下落增伤+50%",
                     target=["NA", "CA", "PA"],
@@ -145,18 +128,24 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     case _:
                         setting.state = "×"
             case "千岩4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc=f"元素战技命中3秒内，全队护盾强效+30%且攻击+20%(+{prop.atk_base * 0.2:.0f})",
                     atk=PoFValue(percent=0.2),
                     shield_strength=0.3,
                 )
             case "沉沦4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="施放元素战技15秒内，普攻和重击增伤+30%",
                     target=["NA", "CA"],
                     dmg_bonus=0.3,
                 )
             case "流星4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="护盾庇护下，普攻和重击增伤+40%",
                     target=["NA", "CA"],
@@ -182,12 +171,16 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     case _:
                         setting.state = "×"
             case "骑士4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="击败敌方10秒内，重击增伤+50%",
                     target="CA",
                     dmg_bonus=0.5,
                 )
             case "宗室4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc=f"施放元素爆发12秒内，全队攻击+20%(+{prop.atk_base * 0.2:.0f})",
                     atk=PoFValue(percent=0.2),
@@ -200,17 +193,14 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 )
             case "魔女4-火伤":
                 match setting.label:
-                    case "1":
-                        setting.state, m = "1层", 1
-                    case "2":
-                        setting.state, m = "2层", 2
-                    case "3":
-                        setting.state, m = "3层", 3
+                    case x if x in ["1", "2", "3"]:
+                        setting.state, stack = f"{x}层", int(x)
                     case _:
-                        setting.state, m = "×", 0
+                        setting.state, stack = "×", 0
+                pyro_dmg = 0.075 * stack
                 buff.buff = Buff(
-                    dsc=f"施放元素战技10秒内，火伤+{7.5*m}%",
-                    elem_dmg_bonus=DmgBonus(pyro=0.075 * m),
+                    dsc=f"施放元素战技10秒内，{setting.state}效果，火伤+{pyro_dmg:.0%}",
+                    elem_dmg_bonus=DmgBonus(pyro=pyro_dmg),
                 )
             case "魔女4-火反应":
                 buff.buff = Buff(
@@ -248,16 +238,16 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 buff.buff = Buff(
                     dsc="触发扩散10s内，对应元素抗性-40%",
                 )
-                if "火" in setting.label:
+                if (label in setting.label for label in ["火", "1"]):
                     setting.state += "火"
                     buff.buff.resist_reduction.set({"pyro": 0.4})
-                if "水" in setting.label:
+                if (label in setting.label for label in ["水", "2"]):
                     setting.state += "水"
                     buff.buff.resist_reduction.set({"hydro": 0.4})
-                if "雷" in setting.label:
+                if (label in setting.label for label in ["雷", "3"]):
                     setting.state += "雷"
                     buff.buff.resist_reduction.set({"electro": 0.4})
-                if "冰" in setting.label:
+                if (label in setting.label for label in ["冰", "4"]):
                     setting.state += "冰"
                     buff.buff.resist_reduction.set({"cryo": 0.4})
                 if setting.state == "-":
@@ -277,17 +267,23 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 else:
                     setting.state = "×"
             case "少女4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     target="H",
                     dsc="施放元素战技或元素爆发10秒内，全队受治疗+20%",
                     healing=0.2,
                 )
             case "渡火4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="敌人火附着，增伤+35%",
                     dmg_bonus=0.35,
                 )
             case "平雷4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="敌人雷附着，增伤+35%",
                     dmg_bonus=0.35,
@@ -310,6 +306,8 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     setting.state = "×"
             # =======四星========
             case "战狂4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="角色生命<70%,暴击+24%",
                     crit_rate=0.24,
@@ -321,11 +319,15 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     crit_rate=0.3,
                 )
             case "勇士4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="敌方生命>50%，增伤+30%",
                     dmg_bonus=0.3,
                 )
             case "教官4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="触发反应8s内，精通+120",
                     elem_mastery=120,
@@ -344,6 +346,8 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     dmg_bonus=0.15,
                 )
             case "武人4":
+                if setting.label == "-":
+                    setting.state = "×"
                 buff.buff = Buff(
                     dsc="施放元素战技8秒内，普攻与重击增伤+25%",
                     target=["NA", "CA"],
@@ -372,8 +376,7 @@ def artifacts_setting(
                             source=source,
                             name="花神4",
                             setting=BuffSetting(
-                                dsc="触发绽放、超绽放、烈绽放叠层||||⓪0层：绽放系列反应系数+40%；①1层：绽放系列反应系数+50%"
-                                + "②2层：绽放系列反应系数+60%；③3层：绽放系列反应系数+70%；④4层：绽放系列反应系数+80%",
+                                dsc="触发绽放系列反应叠层，绽放系列初始反应系数+40%，①~④每层额外反应系数+10%",
                                 label=labels.get("花神4", "4"),
                             ),
                         )
@@ -384,6 +387,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="沙阁4",
+                            setting=BuffSetting(label=labels.get("沙阁4", "○")),
                         )
                     )
             case "饰金之梦":
@@ -394,8 +398,7 @@ def artifacts_setting(
                             name="饰金4",
                             buff_type="propbuff",
                             setting=BuffSetting(
-                                dsc="触发元素反应，其他角色的元素类型||⓪0名异色：攻击+42%；①1名异色：精通+50，攻击+28%"
-                                + "②2名异色：精通+100，攻击+14%；③3名异色：精通+150；④关（×）：无增益",
+                                dsc="触发元素反应时，依据异色队友的元素，⓪~③每名异色精通+50，每名同色：攻击+14%",
                                 label=labels.get("饰金4", "3"),
                             ),
                         )
@@ -407,6 +410,7 @@ def artifacts_setting(
                             source=source,
                             name="深林4",
                             buff_range="all",
+                            setting=BuffSetting(label=labels.get("深林4", "○")),
                         )
                     )
             case "来歆余响":
@@ -425,10 +429,8 @@ def artifacts_setting(
                             name="辰砂4-潜光",
                             buff_type="propbuff",
                             setting=BuffSetting(
-                                dsc="施放元素爆发，降低生命叠层||⓪0层：攻击+8%；"
-                                + "①1层：攻击+18%；②2层：攻击+28%；"
-                                + "③3层：攻击+38%；④4层：攻击+48%",
-                                label=labels.get("辰砂4-潜光", "3"),
+                                dsc="施放元素爆发后，降低生命叠层，初始攻击+8%，①~④每层额外攻击+10%",
+                                label=labels.get("辰砂4-潜光", "4"),
                             ),
                         )
                     )
@@ -440,8 +442,7 @@ def artifacts_setting(
                             name="华馆4-问答",
                             buff_type="propbuff",
                             setting=BuffSetting(
-                                dsc="岩元素攻击命中||⓪0层：无增益；①1层：防御+6%，岩伤+6%；②2层：防御+12%，岩伤+12%"
-                                + "③3层：防御+18%，岩伤+18%；④4层：防御+24%，岩伤+24%",
+                                dsc="岩元素攻击命中叠层，①~④每层：防御+6%，岩伤+6%",
                                 label=labels.get("华馆4-问答", "4"),
                             ),
                         )
@@ -460,6 +461,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="追忆4",
+                            setting=BuffSetting(label=labels.get("追忆4", "○")),
                         )
                     )
             case "苍白之火":
@@ -470,7 +472,7 @@ def artifacts_setting(
                             name="苍白4",
                             buff_type="propbuff",
                             setting=BuffSetting(
-                                dsc="元素战技命中叠层||⓪0层：无增益；①1层：攻击+9%；②2层：攻击+18%，物伤+25%",
+                                dsc="元素战技命中叠层，①~②每层攻击+9%，满层额外物伤+25%",
                                 label=labels.get("苍白4", "2"),
                             ),
                         )
@@ -483,6 +485,7 @@ def artifacts_setting(
                             name="千岩4",
                             buff_range="all",
                             buff_type="propbuff",
+                            setting=BuffSetting(label=labels.get("千岩4", "○")),
                         )
                     )
             case "沉沦之心":
@@ -491,6 +494,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="沉沦4",
+                            setting=BuffSetting(label=labels.get("沉沦4", "○")),
                         )
                     )
             case "逆飞的流星":
@@ -499,6 +503,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="流星4",
+                            setting=BuffSetting(label=labels.get("流星4", "○")),
                         )
                     )
             case "悠古的磐岩":
@@ -510,9 +515,7 @@ def artifacts_setting(
                             buff_range="all",
                             buff_type="propbuff",
                             setting=BuffSetting(
-                                dsc="获取结晶片||⓪无（×）：无增益；"
-                                + "①火：全队火伤+35%；②水：全队水伤+35%；"
-                                + "③雷：全队雷伤+35%；④冰：全队冰伤+35%；",
+                                dsc="根据获取结晶片的元素，①火②水③雷④冰：全队对应元素增伤+35%",
                                 label=labels.get("磐岩4", "火"),
                             ),
                         )
@@ -523,6 +526,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="骑士4",
+                            setting=BuffSetting(label=labels.get("骑士4", "○")),
                         )
                     )
             case "昔日宗室之仪":
@@ -540,6 +544,7 @@ def artifacts_setting(
                             name="宗室4",
                             buff_range="all",
                             buff_type="propbuff",
+                            setting=BuffSetting(label=labels.get("宗室4", "○")),
                         )
                     )
             case "炽烈的炎之魔女":
@@ -556,8 +561,7 @@ def artifacts_setting(
                             name="魔女4-火伤",
                             buff_type="propbuff",
                             setting=BuffSetting(
-                                dsc="施放元素战技叠层||⓪0层：无增益；"
-                                + "①1层：火伤+7.5%；②2层：火伤+15%；③3层：火伤+22.5%",
+                                dsc="施放元素战技叠层，①~③每层火伤+7.5%",
                                 label=labels.get("魔女4-火伤", "3"),
                             ),
                         )
@@ -592,9 +596,7 @@ def artifacts_setting(
                             name="翠绿4-减抗",
                             buff_range="all",
                             setting=BuffSetting(
-                                dsc="触发扩散（可重复）||⓪无（×）：无增益；"
-                                + "火：火抗-40%；水：水抗-40%；"
-                                + "雷：雷抗-40%；冰：冰抗-40%；",
+                                dsc="触发扩散（可重复），①火②水③雷④冰：对应抗性-40%",
                                 label=labels.get("翠绿4-减抗", "火"),
                             ),
                         )
@@ -613,6 +615,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="少女4",
+                            setting=BuffSetting(label=labels.get("少女4", "○")),
                         )
                     )
             case "渡过烈火的贤人":
@@ -621,6 +624,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="渡火4",
+                            setting=BuffSetting(label=labels.get("渡火4", "○")),
                         )
                     )
             case "平息鸣雷的尊者":
@@ -629,6 +633,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="平雷4",
+                            setting=BuffSetting(label=labels.get("平雷4", "○")),
                         )
                     )
             case "冰风迷途的勇士":
@@ -638,7 +643,7 @@ def artifacts_setting(
                             source=source,
                             name="冰风4",
                             setting=BuffSetting(
-                                dsc="敌方状态||⓪（×）：无增益；①冰附着：暴击+20%；②冻结：暴击+40%",
+                                dsc="敌方状态，①冰附着：暴击+20%；②冻结：暴击+40%",
                                 label=labels.get("冰风4", "2"),
                             ),
                         )
@@ -650,6 +655,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="战狂4",
+                            setting=BuffSetting(label=labels.get("战狂4", "○")),
                         )
                     )
             case "行者之心":
@@ -666,6 +672,7 @@ def artifacts_setting(
                         BuffInfo(
                             source=source,
                             name="勇士4",
+                            setting=BuffSetting(label=labels.get("勇士4", "○")),
                         )
                     )
             case "教官":
@@ -676,6 +683,7 @@ def artifacts_setting(
                             name="教官4",
                             buff_range="all",
                             buff_type="propbuff",
+                            setting=BuffSetting(label=labels.get("教官4", "○")),
                         )
                     )
             case "赌徒":
@@ -699,6 +707,7 @@ def artifacts_setting(
                             BuffInfo(
                                 source=source,
                                 name="武人4",
+                                setting=BuffSetting(label=labels.get("武人4", "○")),
                             )
                         )
 

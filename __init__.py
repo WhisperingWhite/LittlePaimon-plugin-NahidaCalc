@@ -1,28 +1,39 @@
 from nonebot import on_command
 from nonebot.adapters.onebot.v11 import (
     Bot,
+    GroupMessageEvent,
     Message,
     MessageEvent,
-    GroupMessageEvent,
     PrivateMessageEvent,
 )
-from nonebot.adapters.onebot.v11.helpers import HandleCancellation
 from nonebot.matcher import Matcher
 from nonebot.params import Arg, ArgPlainText, CommandArg
+from nonebot.plugin import PluginMetadata
 from nonebot.typing import T_State
 
 from LittlePaimon.database import Character
 from LittlePaimon.utils import DRIVER, logger
+from LittlePaimon.utils.alias import get_match_alias
 from LittlePaimon.utils.genshin import GenshinInfoManager
 from LittlePaimon.utils.message import CommandCharacter, CommandPlayer
-from LittlePaimon.utils.alias import get_match_alias
+
+from .classmodel import Dmg
 from .database import CalcInfo, connect, disconnect
 from .draw_character_detail import draw_chara_detail
 from .role import get_role
-from .classmodel import Dmg
 
 DRIVER.on_startup(connect)
 DRIVER.on_shutdown(disconnect)
+
+__plugin_meta__ = PluginMetadata(
+    name="纳西妲计算",
+    description="纳西妲计算",
+    usage="纳西妲计算",
+    extra={
+        "author": "pika",
+        "priority": 20,
+    },
+)
 
 NICKNAME = "纳西妲"
 
@@ -34,7 +45,7 @@ update = on_command(
     state={
         "pm_name": "upd",
         "pm_description": '更新你的原神玩家和角色数据，绑定cookie后数据更详细，加上"天赋"可以更新天赋等级',
-        "pm_usage": "nhd更新<角色名>",
+        "pm_usage": "upd<角色名>",
         "pm_priority": 1,
     },
 )
@@ -96,7 +107,7 @@ nhd = on_command(
     state={
         "pm_name": "nhd",
         "pm_description": "查看指定角色的详细面板数据及伤害计算",
-        "pm_usage": "nhd(uid)<角色名>",
+        "pm_usage": "nhd<角色名>",
         "pm_priority": 3,
     },
 )
@@ -164,7 +175,7 @@ set_info = on_command(
     state={
         "pm_name": "set_info",
         "pm_description": "查看指定角色的详细面板数据及伤害计算",
-        "pm_usage": "set(uid)<角色名>",
+        "pm_usage": "set<角色名>",
         "pm_priority": 4,
     },
 )
@@ -210,7 +221,7 @@ async def _(
     """条件状态机"""
     state_num: str = state["state"]
     calc_info: CalcInfo = state["calc"]
-    convers = "请选择需要设置的内容：\n0：取消\n1：增益\n2：伤害权重\n3：队友\n4：流派\n5：保存更改"
+    convers = "请选择需要设置的内容：\n0：取消\n1：增益\n2：伤害权重\n3：队友\n4：流派\n5：共鸣\n6：保存更改"
     match state_num:
         case "0":
             state["state"] = "1"
@@ -313,6 +324,10 @@ async def _(
                     state["state"] = "1-4"
                     await set_info.reject(msg)
                 case "5":
+                    msg = "输入最多两种元素"
+                    state["state"] = "1-5"
+                    await set_info.reject(msg)
+                case "6":
                     await calc_info.save()
                     await CalcInfo.update(event.user_id, state["uid"], state["chara"])
                     await set_info.finish("已保存设置")
@@ -379,5 +394,13 @@ async def _(
                 num = int(feedback)
                 if num < len(state["ctgs"]):
                     calc_info.category = state["ctgs"][num - 1]
+            state["state"] = "1"
+            await set_info.reject(convers)
+        # 共鸣
+        case "1-5":
+            calc_info.resonance = ""
+            for char in feedback:
+                if char in ["火", "雷", "水", "草", "风", "岩", "冰"]:
+                    calc_info.resonance += char
             state["state"] = "1"
             await set_info.reject(convers)

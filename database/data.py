@@ -2,9 +2,11 @@ from tortoise import fields
 from tortoise.models import Model
 
 from LittlePaimon.database import Character
+from LittlePaimon.utils.genshin import GenshinInfoManager
 
 from ..classmodel import BuffInfo, BuffList, Dmg, DmgList, RelicScore
 from ..role import get_role
+from asyncio import run
 
 
 class CalcInfo(Model):
@@ -31,8 +33,12 @@ class CalcInfo(Model):
     """队友"""
     category: str = fields.CharField(max_length=10, default="")
     """伤害流派"""
+    resonance: str = fields.CharField(max_length=10, default="")
+    """元素共鸣"""
     valid_prop: list = fields.JSONField(default=[])
     """有效属性"""
+    update_time = fields.DatetimeField(auto_now=True)
+    """更新时间"""
 
     @classmethod
     async def update(cls, user_id: str, uid: str, charc: Character):
@@ -44,9 +50,18 @@ class CalcInfo(Model):
         calc_info.buffs = await role.update_buff()
         calc_info.dmgs = await role.update_dmg(is_new)
         calc_info.scores = await role.update_scores()
-        calc_info.partner, calc_info.category, calc_info.valid_prop = (
-            role.partner,
-            role.category,
-            role.valid_prop,
-        )
+        (
+            calc_info.partner,
+            calc_info.category,
+            calc_info.valid_prop,
+            calc_info.resonance,
+        ) = (role.get_partner(), role.category, role.valid_prop, role.resonance)
         await calc_info.save()
+
+    def strToRole(cls):
+        """把角色名称转换成相应模型"""
+        output_list = []
+        for partn in cls.partner[:3]:
+            gim = GenshinInfoManager(cls.user_id, cls.uid)
+            charc = run(gim.get_character(name=partn, data_source="enka"))
+            output_list.append(get_role(charc))

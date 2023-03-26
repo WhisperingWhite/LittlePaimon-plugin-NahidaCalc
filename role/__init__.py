@@ -17,6 +17,7 @@ from .Candace import Candace
 from .Chongyun import Chongyun
 from .Collei import Collei
 from .Cyno import Cyno
+from .Dehya import Dehya
 from .Diluc import Diluc
 from .Diona import Diona
 from .Dori import Dori
@@ -36,6 +37,7 @@ from .Klee import Klee
 from .Kokomi import Kokomi
 from .Layla import Layla
 from .Lisa import Lisa
+from .Mika import Mika
 from .Mona import Mona
 from .Nahida import Nahida
 from .Nilou import Nilou
@@ -216,5 +218,9 @@ def get_role(
             return Yaoyao(charc, data)
         case "艾尔海森":
             return Alhatham(charc, data)
+        case "迪希雅":
+            return Dehya(charc, data)
+        case "米卡":
+            return Mika(charc, data)
     logger.info("Nahida", "➤➤", {"角色": charc.name}, "还未更新角色信息", False)
     return Role(charc, data)

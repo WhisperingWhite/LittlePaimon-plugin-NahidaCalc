@@ -47,7 +47,7 @@ def resonance(buff_list: list[BuffInfo], prop: DmgCalc):
                     buff_info.buff.resist_reduction = DmgBonus(geo=0.2)
 
 
-def resonance_setting(elements, settings: dict):
+def resonance_setting(elements: str, settings: dict):
     """
     元素共鸣设置
     @params:
@@ -56,7 +56,7 @@ def resonance_setting(elements, settings: dict):
     """
     output: list[BuffInfo] = []
     source = "元素共鸣"
-    for element in elements[0:2]:
+    for element in elements:
         match element:
             case "火":
                 output.append(
