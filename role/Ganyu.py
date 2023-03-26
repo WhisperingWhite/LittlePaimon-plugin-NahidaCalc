@@ -36,12 +36,13 @@ class Ganyu(Role):
         setting = buff_info.setting
         match setting.label:
             case x if x in ["1", "2", "3", "4", "5"]:
-                setting.state, s = f"{x}层", int(x)
+                setting.state, stack = f"{x}层", int(x)
             case _:
-                setting.state, s = "×", 0
+                setting.state, stack = "×", 0
+        dmg_bonus = 0.05 * stack
         buff_info.buff = Buff(
-            dsc=f"降众天华领域内，对敌增伤+{5*s}%，持续3s",
-            dmg_bonus=0.05 * s,
+            dsc=f"对降众天华领域内敌方，{setting.state}增伤+{dmg_bonus:.0%}，持续3s",
+            dmg_bonus=dmg_bonus,
         )
 
     def skill_A(self, dmg_info: Dmg, reaction=""):
@@ -81,7 +82,7 @@ class Ganyu(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    category: str = ""
+    category: str = "融甘"
     """角色所属的流派，影响圣遗物分数计算"""
     cate_list: list = ["融甘", "冻甘"]
     """可选流派"""
@@ -113,7 +114,7 @@ class Ganyu(Role):
                     BuffInfo(
                         source=f"{self.name}-T2",
                         name="天地交泰",
-                        buff_range="active",
+                        buff_range="all",
                         buff_type="propbuff",
                         setting=BuffSetting(label=labels.get("天地交泰", "○")),
                     )
@@ -135,7 +136,7 @@ class Ganyu(Role):
                         name="西狩",
                         buff_range="active",
                         setting=BuffSetting(
-                            dsc="降众天华领域内，随时间叠层，⓪~⑤每层：增伤+5%",
+                            dsc="降众天华领域内，随时间叠层，⓪~⑤每层提升增伤",
                             label=labels.get("西狩", "3"),
                         ),
                     )
