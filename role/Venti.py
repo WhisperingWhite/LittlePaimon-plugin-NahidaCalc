@@ -55,7 +55,6 @@ class Venti(Role):
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
-        self.atk_flag = True if dmg_info.weight > 0 else self.atk_flag
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
     def skill_Q(self, dmg_info: Dmg):
@@ -70,7 +69,6 @@ class Venti(Role):
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
-        self.atk_flag = True if dmg_info.weight > 0 else self.atk_flag
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
     def swirls(self, dmg_info: Dmg):
@@ -79,22 +77,22 @@ class Venti(Role):
         calc.set(
             reaction_type="扩散",
         )
-        self.em_flag = True if dmg_info.weight > 0 else self.em_flag
         dmg_info.exp_value = int(calc.calc_dmg.get_trans_reac_dmg())
 
-    atk_flag = False
-    """直伤流"""
-    em_flag = False
-    """精通流"""
+    category: str = "充能副核"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["充能副核", "精通副核"]
+    """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
-        props = []
-        if self.atk_flag:
-            props.extend(["atk", "atk_per", "anemo", "crit", "crit_hurt"])
-        if self.em_flag:
-            props.append("elem_ma")
-        return props
+        match self.category:
+            case "充能副核":
+                return ["攻击", "攻击%", "风伤", "暴击", "暴伤", "充能"]
+            case "精通副核":
+                return ["充能", "精通"]
+            case _:
+                return ["攻击%", "风伤", "暴击", "暴伤", "充能", "精通"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -118,6 +116,7 @@ class Venti(Role):
                         source=f"{self.name}-C4",
                         name="自由的凛风",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("自由的凛风", "○")),
                     )
                 )
                 if self.info.constellation >= 6:
@@ -127,12 +126,12 @@ class Venti(Role):
                             name="抗争的暴风",
                             buff_range="all",
                             setting=BuffSetting(
-                                dsc="元素转化（火，水，雷，冰）：对应抗性-20%",
+                                dsc="元素转化①火②水③雷④冰：对应抗性-20%",
                                 label=labels.get("抗争的暴风", "火"),
                             ),
                         )
                     )
-            return output
+        return output
 
     def buff(self, buff_list: list[BuffInfo], prop):
         """增益列表"""
@@ -191,19 +190,19 @@ class Venti(Role):
                         self.swirls(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
-            case "副c流":
+        match self.category:
+            case "充能副核":
                 return {
-                    "充能效率阈值": 180,
+                    "充能效率阈值": 200,
                     "高天之歌": 10,
                     "风神之诗": -1,
-                    "扩散": 0,
+                    "扩散": -1,
                 }
-            case "精通流":
+            case "精通副核":
                 return {
-                    "充能效率阈值": 220,
+                    "充能效率阈值": 240,
                     "高天之歌": 0,
                     "风神之诗": 0,
                     "扩散": 10,

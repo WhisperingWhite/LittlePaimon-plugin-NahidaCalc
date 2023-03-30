@@ -1,6 +1,14 @@
-from ..classmodel import Buff, BuffInfo, BuffSetting, PoFValue, FixValue, Info, DmgBonus
 from LittlePaimon.database import Weapon
 
+from ..classmodel import (
+    Buff,
+    BuffInfo,
+    BuffSetting,
+    DmgBonus,
+    Info,
+    Multiplier,
+    PoFValue,
+)
 from ..dmg_calc import DmgCalc
 
 
@@ -20,7 +28,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = "最大层数", 1
                     case _:
                         setting.state, stack = "×", 0
-                dmg_bonus = (0.36 + 0.12 * weapon.promote_level) * stack
+                dmg_bonus = (0.36 + 0.12 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"达到{setting.state}时，普攻增伤+{dmg_bonus:.0%}",
                     target="NA",
@@ -32,14 +40,14 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                     case x if x in ["1", "2", "3"]:
                         setting.state, em, dmg_bonus = (
                             f"{x}名同元素",
-                            (24 + 8 * weapon.promote_level) * (3 - int(x)),
-                            (0.06 + 0.04 * weapon.promote_level) * int(x),
+                            (24 + 8 * weapon.affix_level) * (3 - int(x)),
+                            (0.06 + 0.04 * weapon.affix_level) * int(x),
                         )
                     case _:
                         setting.state, em, dmg_bonus = (
                             "0名同元素",
                             0,
-                            0.18 + 0.12 * weapon.promote_level,
+                            0.18 + 0.12 * weapon.affix_level,
                         )
                 buff_info.buff = Buff(
                     dsc=f"队伍中有{setting.state}，元素精通+{em}，元素增伤+{dmg_bonus:.0%}",
@@ -47,7 +55,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                     elem_dmg_bonus=DmgBonus().set("elem", dmg_bonus),
                 )
             case "千夜浮梦-千夜的曙歌(队伍)":
-                em = 38 + 2 * weapon.promote_level
+                em = 38 + 2 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"队友精通+{em}",
                     elem_mastery=em,
@@ -59,26 +67,25 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                dmg_bonus = (0.09 + 0.03 + weapon.promote_level) * stack
+                dmg_bonus = (0.09 + 0.03 + weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"施放元素战技16秒内，元素战技增伤+{dmg_bonus:.0%}",
                     target="E",
                     dmg_bonus=dmg_bonus,
                 )
             case "神乐之真意-神乐舞满层":
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"神乐舞满层，元素增伤+{dmg_bonus:.0%}",
                     elem_dmg_bonus=DmgBonus().set("elem", dmg_bonus),
                 )
             # 不灭月华
             case "不灭月华-白夜皓月":
-                percent = 0.5 + 0.5 * weapon.promote_level
-                dmg = prop.hp * percent
+                scaler = 0.5 + 0.5 * weapon.affix_level
                 buff_info.buff = Buff(
-                    dsc=f"普攻基础伤害提升生命值上限的{percent}(+{dmg:.0f})",
+                    dsc=f"普攻倍率+{scaler}%生命上限",
                     target="NA",
-                    fix_value=FixValue(dmg=dmg),
+                    multiplier=Multiplier(hp=scaler),
                 )
             # 尘世之锁
             case "尘世之锁-金璋皇极":
@@ -88,7 +95,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state = "{n}层，有护盾" if shield == 2 else "{n}层，无护盾"
                     case _:
                         setting.state, stack, shield = "×", 0, 0
-                atk_per = (0.03 + 0.01 * weapon.promote_level) * stack * shield
+                atk_per = (0.03 + 0.01 * weapon.affix_level) * stack * shield
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -100,7 +107,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                dmg_bonus = (0.06 + 0.02 * weapon.promote_level) * stack
+                dmg_bonus = (0.06 + 0.02 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，元素增伤+{dmg_bonus:.0%}",
                     elem_dmg_bonus=DmgBonus().set("elem", dmg_bonus),
@@ -110,14 +117,14 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             # ============================
             # 流浪的晚星
             case "流浪的晚星-林野晚星":
-                percent = 0.18 + 0.06 * weapon.promote_level
+                percent = 0.18 + 0.06 * weapon.affix_level
                 atk = prop.elem_mastery * percent
                 buff_info.buff = Buff(
                     dsc=f"基于精通的{percent:.0%}，攻击+({atk:.0f})",
                     atk=PoFValue(fix=atk),
                 )
             case "流浪的晚星-林野晚星(队友)":
-                percent = 0.18 + 0.06 * weapon.promote_level
+                percent = 0.18 + 0.06 * weapon.affix_level
                 atk = prop.elem_mastery * percent * 0.3
                 buff_info.buff = Buff(
                     dsc=f"队友攻击+{atk:.0f}",
@@ -129,7 +136,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                elem_ma = (21 + 3 * weapon.promote_level) * stack
+                elem_ma = (21 + 3 * weapon.affix_level) * stack
                 atk_per = 0.05 * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}「盈缺」效果，精通+{elem_ma}，攻击-{atk_per:.0%}",
@@ -139,13 +146,13 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "证誓之明瞳-微光的海渊民":
                 if setting.label == "-":
                     setting.state = "×"
-                recharge = 0.18 + 0.06 * weapon.promote_level
+                recharge = 0.18 + 0.06 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"施放元素战技10秒内，充能+{recharge:.0%}",
                     recharge=recharge,
                 )
             case "白辰之环-樱之斋宫":
-                elem_dmg_bonus = 0.075 + 0.025 * weapon.promote_level
+                elem_dmg_bonus = 0.075 + 0.025 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"触发雷元素相关反应6秒内，相应元素增伤+{elem_dmg_bonus:.0%}",
                 )
@@ -172,7 +179,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "嘟嘟可故事集-嘟嘟！大冒险(重击加成)":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.12 + 0.04 * weapon.promote_level
+                dmg_bonus = 0.12 + 0.04 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻命中6秒内，重击增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -180,7 +187,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "嘟嘟可故事集-嘟嘟！大冒险(攻击提升)":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.06 + 0.02 * weapon.promote_level
+                atk_per = 0.06 + 0.02 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"重击命中6秒内，攻击+{atk_per:.0%}(+{prop.atk_base*atk_per:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -188,7 +195,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "暗巷的酒与诗-变化万端":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.15 + 0.05 * weapon.promote_level
+                atk_per = 0.15 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"使用冲刺或替代冲刺的能力5秒内，攻击+{atk_per:.0%}(+{prop.atk_base*atk_per:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -199,7 +206,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.12 + 0.03 * weapon.promote_level) * stack
+                atk_per = (0.12 + 0.03 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}，持续30秒，每层独立",
                     atk=PoFValue(percent=atk_per),
@@ -210,7 +217,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                dmg_bonus = (0.06 + 0.02 * weapon.promote_level) * stack
+                dmg_bonus = (0.06 + 0.02 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，元素增伤+{dmg_bonus:.0%}",
                     elem_dmg_bonus=DmgBonus().set({"elem": dmg_bonus}),
@@ -218,7 +225,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "匣里日月-日月辉":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.15 + 0.05 * weapon.promote_level
+                dmg_bonus = 0.15 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻命中6秒内，元素战技与元素爆发增伤+{dmg_bonus:.0%}"
                     + f"元素战技与元素爆发命中6秒内，普攻增伤+{dmg_bonus:.0%}",
@@ -229,21 +236,21 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                 match setting.label:
                     case "1":
                         setting.state = "宣叙调"
-                        atk_per = 0.45 + 0.15 * weapon.promote_level
+                        atk_per = 0.45 + 0.15 * weapon.affix_level
                         buff_info.buff = Buff(
                             dsc=f"触发咏叹调，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                             atk=PoFValue(percent=atk_per),
                         )
                     case "2":
                         setting.state = "宣叙调"
-                        dmg_bonus = 0.36 + 0.12 * weapon.promote_level
+                        dmg_bonus = 0.36 + 0.12 * weapon.affix_level
                         buff_info.buff = Buff(
                             dsc=f"触发咏叹调，元素增伤+{dmg_bonus:.0%}",
                             elem_dmg_bonus=DmgBonus().set({"elem": dmg_bonus}),
                         )
                     case "3":
                         setting.state = "间奏曲"
-                        elem_ma = 180 + 60 * weapon.promote_level
+                        elem_ma = 180 + 60 * weapon.affix_level
                         buff_info.buff = Buff(
                             dsc=f"触发间奏曲，精通+{elem_ma}",
                             elem_mastery=elem_ma,
@@ -256,7 +263,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "甲级宝珏-奔袭战术":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.1 + 0.02 * weapon.promote_level
+                atk_per = 0.1 + 0.02 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"击杀15秒内，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -264,7 +271,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "翡玉法球-激流":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.15 + 0.05 * weapon.promote_level
+                atk_per = 0.15 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"触发蒸发、感电、冰冻、绽放或水元素扩散12秒内，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -272,7 +279,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "讨龙英杰谭-传承":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.18 + 0.06 * weapon.promote_level
+                atk_per = 0.18 + 0.06 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"主动切换后，新登场角色攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，持续10秒",
                     atk=PoFValue(percent=atk_per),
@@ -280,7 +287,7 @@ def Catalyst(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "魔导绪论-止水息雷":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"敌方水或雷附着，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,

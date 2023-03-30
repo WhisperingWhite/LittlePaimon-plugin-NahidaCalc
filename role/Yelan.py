@@ -63,6 +63,39 @@ class Yelan(Role):
             hp=PoFValue(percent=s * 0.1),
         )
 
+    def skill_A(self, dmg_info: Dmg):
+        """潜形隐曜弓"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("普通攻击·潜形隐曜弓", self.talents[0].level, "破局矢伤害").replace(
+                "%生命值上限", ""
+            )
+        )
+        calc.set(
+            value_type="CA",
+            elem_type="hydro",
+            multiplier=Multiplier(hp=scaler * 1.56),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    def skill_E(self, dmg_info: Dmg, reaction=""):
+        """萦络纵命索"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("萦络纵命索", self.talents[1].level, "技能伤害").replace(
+                "%生命值上限", ""
+            )
+        )
+        calc.set(
+            value_type="E",
+            elem_type="hydro",
+            reaction_type=reaction,
+            multiplier=Multiplier(hp=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
     def skill_Q(self, dmg_info: Dmg):
         """渊图玲珑骰"""
         calc = self.create_calc()
@@ -79,10 +112,21 @@ class Yelan(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    category: str = "后台夜"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["后台夜", "蒸夜"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "后台夜":
+                return ["生命", "生命%", "水伤", "暴击", "暴伤", "充能"]
+            case "蒸夜":
+                return ["生命", "生命%", "水伤", "暴击", "暴伤", "精通"]
+            case _:
+                return ["生命", "生命%", "水伤", "暴击", "暴伤", "充能"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -149,6 +193,22 @@ class Yelan(Role):
             ),
             Dmg(
                 index=1,
+                source="E",
+                name="萦络纵命索",
+                dsc="E一段",
+                weight=weights.get("萦络纵命索", 0),
+                exclude_buff=ex_buffs.get("萦络纵命索", []),
+            ),
+            Dmg(
+                index=2,
+                source="E",
+                name="萦络纵命索-蒸发",
+                dsc="E一段蒸发",
+                weight=weights.get("萦络纵命索-蒸发", 0),
+                exclude_buff=ex_buffs.get("萦络纵命索-蒸发", []),
+            ),
+            Dmg(
+                index=3,
                 source="Q",
                 name="渊图玲珑骰",
                 dsc="Q玄掷玲珑每段",
@@ -156,21 +216,57 @@ class Yelan(Role):
                 exclude_buff=ex_buffs.get("渊图玲珑骰", []),
             ),
         ]
+        if self.info.constellation == 6:
+            self.dmg_list.append(
+                Dmg(
+                    index=4,
+                    source="A",
+                    name="潜形隐曜弓",
+                    dsc="A六命破局矢",
+                    weight=weights.get("潜形隐曜弓", 0),
+                    exclude_buff=ex_buffs.get("潜形隐曜弓", []),
+                )
+            )
 
     def dmg(self) -> list[Dmg]:
         """伤害列表"""
         for dmg in self.dmg_list:
             if dmg.weight != 0:
                 match dmg.name:
+                    case "萦络纵命索":
+                        self.skill_E(dmg)
+                    case "萦络纵命索-蒸发":
+                        self.skill_E(dmg, "蒸发")
                     case "渊图玲珑骰":
                         self.skill_Q(dmg)
+                    case "潜形隐曜弓":
+                        self.skill_A(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "后台夜":
+                return {
+                    "充能效率阈值": 180,
+                    "萦络纵命索": -1,
+                    "萦络纵命索-蒸发": 0,
+                    "渊图玲珑骰": 10,
+                    "潜形隐曜弓": 0,
+                }
+            case "蒸夜":
+                return {
+                    "充能效率阈值": 100,
+                    "萦络纵命索": 0,
+                    "萦络纵命索-蒸发": 10,
+                    "渊图玲珑骰": -1,
+                    "潜形隐曜弓": 10,
+                }
             case _:
                 return {
                     "充能效率阈值": 180,
+                    "萦络纵命索": 10,
+                    "萦络纵命索-蒸发": -1,
                     "渊图玲珑骰": 10,
+                    "潜形隐曜弓": -1,
                 }

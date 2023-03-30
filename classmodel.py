@@ -344,8 +344,7 @@ class BuffInfo(BaseModel):
     """加成范围：\\
         self-自身\\
         party-其余友方成员\\
-        active-场上成员\\
-        all-全部队伍成员
+        all-全部队伍成员、场上成员
     """
     buff_type: str = "dmgbuff"
     """增益类型：\\

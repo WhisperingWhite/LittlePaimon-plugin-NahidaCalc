@@ -5,6 +5,7 @@ from ._model import Role
 
 class Kokomi(Role):
     name = "心海"
+
     # TODO:只额外增伤生命值倍率部分， 用exclude_buff
     def buff_T2(self, buff_info: BuffInfo, prop: DmgCalc):
         """真珠御呗"""
@@ -37,11 +38,12 @@ class Kokomi(Role):
     def skill_E(self, dmg_info: Dmg):
         """海月之誓"""
         calc = self.create_calc()
-        scaler, fix_value = float(
-            self.get_scaler("海月之誓", self.talents[1].level, "治疗量")
+        scaler, fix_value = [
+            float(num)
+            for num in self.get_scaler("海月之誓", self.talents[1].level, "治疗量")
             .replace("%生命值上限", "")
             .split("+")
-        )
+        ]
         calc.set(
             multiplier=Multiplier(atk=scaler),
             fix_value=FixValue(heal=fix_value),

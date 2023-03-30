@@ -114,7 +114,7 @@ class Role:
             self.talents = charc.talents
             self.scaler_table = (
                 load_json(JSON_DATA / "roles_data.json")
-                .get(self.name, {})
+                .get(charc.name, {})
                 .get("skill", [])
             )
             self.info = Info(
@@ -171,6 +171,14 @@ class Role:
     def create_calc(self):
         """创建一个伤害计算器"""
         return self.prop.copy().update_buff(self.buffs)
+
+    @property
+    def calc_recharge(self):
+        """圣遗物计算用充能"""
+        calc = self.create_calc() + [
+            buff for buff in self.buffs if buff.source == "calc"
+        ]
+        return calc.recharge
 
     category: str = ""
     """角色所属的流派，影响圣遗物分数计算"""

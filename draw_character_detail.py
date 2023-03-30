@@ -1,12 +1,15 @@
 from LittlePaimon.database import Character
 from LittlePaimon.utils.alias import get_chara_icon
 from LittlePaimon.utils.genshin import GenshinTools
-from LittlePaimon.utils.image import PMImage, font_manager as fm, load_image
+from LittlePaimon.utils.image import PMImage
+from LittlePaimon.utils.image import font_manager as fm
+from LittlePaimon.utils.image import load_image
 from LittlePaimon.utils.message import MessageBuild
 from LittlePaimon.utils.path import ENKA_RES, RESOURCE_BASE_PATH
+
 from .classmodel import BuffInfo, Dmg
-from .Nahidatools import get_rank, check_effective
 from .database import CalcInfo
+from .Nahidatools import check_effective, get_rank
 
 element_type = ["物理", "火元素", "雷元素", "水元素", "草元素", "风元素", "岩元素", "冰元素"]
 TALENT_ICON = RESOURCE_BASE_PATH / "talent"
@@ -348,34 +351,41 @@ async def draw_chara_detail(
         )
         await img.paste(artifact1, (46, 1130))
         await img.text(f"{suit[0][0][:2]}二件套", 154, 1168, font=fm.get("hywh.ttf", 36))
-        await img.text("未激活套装", 154, 1292, font=fm.get("hywh.ttf", 36))
+        # await img.text("未激活套装", 154, 1292, font=fm.get("hywh.ttf", 36))
     else:
         if suit[0][0] == suit[1][0]:
             artifact1 = await load_image(
                 ARTIFACT_ICON / f"{suit[0][1]}.png", size=(110, 110), mode="RGBA"
             )
-            artifact2 = None
+            await img.paste(artifact1, (46, 1130))
             await img.text(
                 f"{suit[0][0][:2]}四件套", 154, 1168, font=fm.get("hywh.ttf", 36)
             )
             # await img.text(f'{suit[0][0][:2]}四件套', 154, 1292, font=fm.get('hywh.ttf', 36))
         else:
             artifact1 = await load_image(
-                ARTIFACT_ICON / f"{suit[0][1]}.png", size=(110, 110), mode="RGBA"
+                ARTIFACT_ICON / f"{suit[0][1]}.png", size=(60, 60), mode="RGBA"
             )
             artifact2 = await load_image(
-                ARTIFACT_ICON / f"{suit[1][1]}.png", size=(110, 110), mode="RGBA"
+                ARTIFACT_ICON / f"{suit[1][1]}.png", size=(60, 60), mode="RGBA"
             )
             await img.text(
-                f"{suit[0][0][:2]}两件套", 154, 1168, font=fm.get("hywh.ttf", 36)
+                f"{suit[0][0][:2]}两件套", 172, 1145, font=fm.get("hywh.ttf", 28)
             )
             await img.text(
-                f"{suit[1][0][:2]}两件套", 154, 1292, font=fm.get("hywh.ttf", 36)
+                f"{suit[1][0][:2]}两件套", 172, 1200, font=fm.get("hywh.ttf", 28)
             )
-        await img.paste(artifact1, (46, 1130))
-        await img.paste(artifact2, (46, 1255))
+            await img.paste(artifact1, (88, 1132))
+            await img.paste(artifact2, (88, 1188))
 
-    await img.text(data.category, (22, 402), 1292, font=fm.get("hywh.ttf", 36))
+    await img.text(
+        data.category,
+        (22, 402),
+        1276,
+        font=fm.get("hywh.ttf", 48),
+        align="center",
+        color="white",
+    )
 
     # 立绘
     await img.text(

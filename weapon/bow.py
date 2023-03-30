@@ -1,6 +1,6 @@
-from ..classmodel import Buff, BuffInfo, BuffSetting, PoFValue, FixValue, Info
 from LittlePaimon.database import Weapon
 
+from ..classmodel import Buff, BuffInfo, BuffSetting, Info, Multiplier, PoFValue
 from ..dmg_calc import DmgCalc
 
 
@@ -15,24 +15,24 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "猎人之径-无休止的狩猎":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg = prop.elem_mastery * (120 + 40 * weapon.promote_level) / 100
+                scaler = 120 + 40 * weapon.affix_level
                 buff_info.buff = Buff(
-                    dsc=f"基于精通，重击基础伤害+{dmg:.0f}",
+                    dsc=f"重击倍率+{scaler}%精通",
                     target="CA",
-                    fix_value=FixValue(dmg=dmg),
+                    multiplier=Multiplier(em=scaler),
                 )
             # 若水
             case "若水-洗濯诸类之形":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.15 + 0.05 * weapon.promote_level
+                dmg_bonus = 0.15 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"周围存在敌人时，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
                 )
             # 冬极白星
             case "冬极白星-极昼的先兆者":
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素战技和元素爆发增伤+{dmg_bonus:.0%}",
                     target=["E", "Q"],
@@ -43,12 +43,12 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     case x if x in ["1", "2", "3"]:
                         setting.state, atk_per = (
                             f"{x}层",
-                            (0.075 + 0.025 * weapon.promote_level) * int(x),
+                            (0.075 + 0.025 * weapon.affix_level) * int(x),
                         )
                     case "4":
                         setting.state, atk_per = (
                             "4层",
-                            0.36 + 0.12 * weapon.promote_level,
+                            0.36 + 0.12 * weapon.affix_level,
                         )
                     case _:
                         setting.state, atk_per = "×", 0
@@ -62,12 +62,12 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     case x if x in ["1", "2"]:
                         setting.state, dmg_bonus = (
                             f"{x}层",
-                            (0.09 + 0.03 * weapon.promote_level) * int(x),
+                            (0.09 + 0.03 * weapon.affix_level) * int(x),
                         )
                     case "3":
                         setting.state, dmg_bonus = (
                             "3层",
-                            0.3 + 0.1 * weapon.promote_level,
+                            0.3 + 0.1 * weapon.affix_level,
                         )
                     case _:
                         setting.state, dmg_bonus = "×", 0
@@ -80,8 +80,8 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "终末嗟叹之诗-离别的思念之歌":
                 if setting.label == "-":
                     setting.state = "×"
-                elem_ma = 75 + 25 * weapon.promote_level
-                atk_per = 0.06 + 0.02 * weapon.promote_level
+                elem_ma = 75 + 25 * weapon.affix_level
+                atk_per = 0.06 + 0.02 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"消耗所有追思之符时，全队元素精通+{elem_ma}，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     elem_mastery=elem_ma,
@@ -96,8 +96,8 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                         setting.state, stack = "0层", 0
                 dmg_bonus = (
                     0.09
-                    + 0.03 * weapon.promote_level
-                    + (0.06 + 0.02 * weapon.promote_level) * stack
+                    + 0.03 * weapon.affix_level
+                    + (0.06 + 0.02 * weapon.affix_level) * stack
                 )
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}箭矢，普攻和重击增伤+{dmg_bonus:.0%}",
@@ -111,7 +111,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "王下近侍-迷宫之王的教导":
                 if setting.label == "-":
                     setting.state = "×"
-                elem_ma = 40 + 20 * weapon.promote_level
+                elem_ma = 40 + 20 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"施放元素战技或元素爆发12秒内，精通+{elem_ma}",
                     elem_mastery=elem_ma,
@@ -122,17 +122,17 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     case "1":
                         setting.state, dmg_bonus = (
                             "夕暮",
-                            4.5 + 1.5 * weapon.promote_level,
+                            4.5 + 1.5 * weapon.affix_level,
                         )
                     case "2":
                         setting.state, dmg_bonus = (
                             "流霞",
-                            7.5 + 2.5 * weapon.promote_level,
+                            7.5 + 2.5 * weapon.affix_level,
                         )
                     case _:
                         setting.state, dmg_bonus = (
                             "朝晖",
-                            10.5 + 3.5 * weapon.promote_level,
+                            10.5 + 3.5 * weapon.affix_level,
                         )
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}状态下，增伤+{dmg_bonus:.0%}",
@@ -145,8 +145,8 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     if (x := int(setting.label)) <= 360:
                         setting.state, stack = f"{x}点能量上限", x
                 dmg_bonus = min(
-                    (0.09 + 0.03 * weapon.promote_level) * stack,
-                    0.3 + 0.1 * weapon.promote_level,
+                    (0.09 + 0.03 * weapon.affix_level) * stack,
+                    0.3 + 0.1 * weapon.affix_level,
                 )
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，元素爆发增伤+{dmg_bonus:.0%}",
@@ -160,7 +160,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                         setting.state, stack = "满能量", 2
                     case _:
                         setting.state, stack = "缺能量", 1
-                dmg_bonus = (0.12 + 0.04 * weapon.promote_level) * stack
+                dmg_bonus = (0.12 + 0.04 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}时，普攻增伤+{dmg_bonus:.0%}",
                     target="NA",
@@ -172,7 +172,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                         setting.state, stack = "满能量", 2
                     case _:
                         setting.state, stack = "缺能量", 1
-                dmg_bonus = (0.09 + 0.03 * weapon.promote_level) * stack
+                dmg_bonus = (0.09 + 0.03 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}时，重击增伤+{dmg_bonus:.0%}",
                     target="CA",
@@ -182,7 +182,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "幽夜华尔兹-极夜二重奏":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.15 + 0.05 * weapon.promote_level
+                dmg_bonus = 0.15 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻命中5秒内，元素战技增伤+{dmg_bonus:.0%}，"
                     + f"元素战技命中5秒内，普攻增伤+{dmg_bonus:.0%}",
@@ -193,7 +193,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "风花之颂-风花之愿":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.12 + 0.04 * weapon.promote_level
+                atk_per = 0.12 + 0.04 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"施放元素战技6秒内，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -204,7 +204,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 if setting.label.isdigit():
                     if 1 <= (x := int(setting.label)) <= 10:
                         setting.state, stack = f"{x}层", x
-                dmg_bonus = 0.02 * weapon.promote_level * stack
+                dmg_bonus = 0.02 * weapon.affix_level * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -216,7 +216,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.09 + 0.03 * weapon.promote_level) * stack
+                atk_per = (0.09 + 0.03 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，持续30秒，每层独立",
                     atk=PoFValue(percent=atk_per),
@@ -228,7 +228,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                         setting.state, stack = f"{x}层", int(x)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.03 + 0.01 * weapon.promote_level) * stack
+                atk_per = (0.03 + 0.01 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，持续6秒",
                     atk=PoFValue(percent=atk_per),
@@ -237,14 +237,14 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "试做澹月-离簇不归":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.27 + 0.09 * weapon.promote_level
+                atk_per = 0.27 + 0.09 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"重击命中要害10秒内，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
                 )
             # 弓藏
             case "弓藏-速射弓斗(普攻)":
-                dmg_bonus = 0.3 + 0.1 * weapon.promote_level
+                dmg_bonus = 0.3 + 0.1 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻增伤+{dmg_bonus:.0%}",
                     target="NA",
@@ -258,7 +258,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                 )
             # 绝弦
             case "绝弦-无矢之歌":
-                dmg_bonus = 0.18 + 0.06 * weapon.promote_level
+                dmg_bonus = 0.18 + 0.06 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素战技与元素爆发增伤+{dmg_bonus:.0%}",
                     target=["E", "Q"],
@@ -271,7 +271,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "弹弓-弹弓(增伤)":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.3 + 0.06 * weapon.promote_level
+                dmg_bonus = 0.3 + 0.06 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻与重击的箭矢在发射0.3秒内命中，增伤+{dmg_bonus:.0%}",
                     target=["NA", "CA"],
@@ -289,7 +289,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "神射手之誓-精准":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.18 + 0.06 * weapon.promote_level
+                dmg_bonus = 0.18 + 0.06 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"针对要害的攻击增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -298,7 +298,7 @@ def Bow(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
             case "鸦羽弓-踏火止水":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"对水或火附着下的敌人，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -409,8 +409,7 @@ def Bow_setting(weapon: Weapon, info: Info, labels: dict, name: str):
                     source=source,
                     name="朦云之月-驭浪的海祇民",
                     setting=BuffSetting(
-                        dsc="队伍中每点元素能量，增加元素爆发增伤，"
-                        + f"增伤上限{30+10*weapon.promote_level}%",
+                        dsc="队伍中每点元素能量，增加元素爆发增伤，" + f"增伤上限{30+10*weapon.affix_level}%",
                         label=labels.get("朦云之月-驭浪的海祇民", "320"),
                     ),
                 )
@@ -459,7 +458,7 @@ def Bow_setting(weapon: Weapon, info: Info, labels: dict, name: str):
                     source=source,
                     name="暗巷猎手-街巷伏击",
                     setting=BuffSetting(
-                        dsc=f"处于后台叠层，①~⑩每层增加增伤，增伤上限{10*weapon.promote_level}%",
+                        dsc=f"处于后台叠层，①~⑩每层增加增伤，增伤上限{10*weapon.affix_level}%",
                         label=labels.get("暗巷猎手-街巷伏击", "10"),
                     ),
                 )

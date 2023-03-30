@@ -6,12 +6,10 @@ from nonebot.adapters.onebot.v11 import (
     MessageEvent,
     PrivateMessageEvent,
 )
-from nonebot.matcher import Matcher
-from nonebot.params import Arg, ArgPlainText, CommandArg
+from nonebot.params import ArgPlainText
 from nonebot.plugin import PluginMetadata
 from nonebot.typing import T_State
 
-from LittlePaimon.database import Character
 from LittlePaimon.utils import DRIVER, logger
 from LittlePaimon.utils.alias import get_match_alias
 from LittlePaimon.utils.genshin import GenshinInfoManager
@@ -139,7 +137,7 @@ async def _(
                     data = await CalcInfo.filter(
                         user_id=user_id, uid=uid, name=character_info.name
                     ).first()
-                    if data is None:
+                    if data is None or data.update_time < character_info.update_time:
                         await CalcInfo.update(user_id, uid, character_info)
                         data = await CalcInfo.filter(
                             user_id=user_id, uid=uid, name=character_info.name
@@ -392,8 +390,10 @@ async def _(
         case "1-4":
             if feedback.isdigit():
                 num = int(feedback)
-                if num < len(state["ctgs"]):
+                if 1 <= num < len(state["ctgs"]):
                     calc_info.category = state["ctgs"][num - 1]
+                if num == 0:
+                    calc_info.category = "test"
             state["state"] = "1"
             await set_info.reject(convers)
         # 共鸣

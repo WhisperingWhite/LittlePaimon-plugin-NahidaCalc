@@ -19,8 +19,8 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state, stack = "0层", 0
                 per = (
                     0.39
-                    + 0.13 * weapon.promote_level
-                    + (0.21 + 0.07 * weapon.promote_level) * stack
+                    + 0.13 * weapon.affix_level
+                    + (0.21 + 0.07 * weapon.affix_level) * stack
                 )
                 atk = per * prop.elem_mastery
                 buff_info.buff = Buff(
@@ -38,23 +38,21 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state = f"{n}层「圆顿」，在后台" if pos == 2 else f"{n}层「圆顿」，在前台"
                     case _:
                         setting.state, stack, pos = "×", 0, 0
-                atk_per = (0.024 + 0.008 * weapon.promote_level) * stack * pos
+                atk_per = (0.024 + 0.008 * weapon.affix_level) * stack * pos
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，攻击+{atk_per:.1%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
                 )
             # 薙草之稻光
             case "薙草之稻光-非时之梦，常世灶食(攻击提升)":
-                per = 0.21 + 0.07 * weapon.promote_level
-                atk_per = min(
-                    per * (prop.recharge - 1), 0.7 + 0.1 * weapon.promote_level
-                )
+                per = 0.21 + 0.07 * weapon.affix_level
+                atk_per = min(per * (prop.recharge - 1), 0.7 + 0.1 * weapon.affix_level)
                 buff_info.buff = Buff(
                     dsc=f"基于充能的{per:.0%}，攻击+{atk_per:.1%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
                 )
             case "薙草之稻光-非时之梦，常世灶食(充能提升)":
-                recharge = 0.25 + 0.05 * weapon.promote_level
+                recharge = 0.25 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"施放元素爆发后的12秒内，充能+{recharge:.0%}",
                     recharge=recharge,
@@ -65,12 +63,12 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                     case "1":
                         setting.state, per = (
                             "半血以下",
-                            0.014 + 0.004 * weapon.promote_level,
+                            0.014 + 0.004 * weapon.affix_level,
                         )
                     case _:
                         setting.state, per = (
                             "半血以上",
-                            0.006 + 0.002 * weapon.promote_level,
+                            0.006 + 0.002 * weapon.affix_level,
                         )
                 atk = per * prop.hp
                 buff_info.buff = Buff(
@@ -85,7 +83,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state = f"{n}层，有护盾" if shield == 2 else f"{n}层，无护盾"
                     case _:
                         setting.state, stack, shield = "×", 0, 0
-                atk_per = (0.03 + 0.01 * weapon.promote_level) * stack * shield
+                atk_per = (0.03 + 0.01 * weapon.affix_level) * stack * shield
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -97,8 +95,8 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.025 + 0.07 * weapon.promote_level) * stack
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level if stack == 7 else 0
+                atk_per = (0.025 + 0.07 * weapon.affix_level) * stack
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level if stack == 7 else 0
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -112,8 +110,8 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
             case "风信之锋-不至之风":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.09 + 0.03 * weapon.promote_level
-                elem_ma = 36 + 12 * weapon.promote_level
+                atk_per = 0.09 + 0.03 * weapon.affix_level
+                elem_ma = 36 + 12 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"触发元素反应10秒内，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，精通+{elem_ma}",
                     atk=PoFValue(percent=atk_per),
@@ -122,7 +120,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
             case "贯月矢-幽林月影":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.12 + 0.04 * weapon.promote_level
+                atk_per = 0.12 + 0.04 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"拾取苏生之叶12秒内，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -133,8 +131,8 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                     if (n := int(setting.label)) <= 360:
                         setting.state, stack = f"{n}点能量上限", n
                 dmg_bonus = min(
-                    (0.09 + 0.03 * weapon.promote_level) * stack,
-                    0.3 + 0.1 * weapon.promote_level,
+                    (0.09 + 0.03 * weapon.affix_level) * stack,
+                    0.3 + 0.1 * weapon.affix_level,
                 )
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，元素爆发增伤+{dmg_bonus:.0%}",
@@ -142,8 +140,8 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                     dmg_bonus=dmg_bonus,
                 )
             case "「渔获」-船歌":
-                dmg_bonus = 0.12 + 0.04 * weapon.promote_level
-                crit_rate = 0.045 + 0.015 * weapon.promote_level
+                dmg_bonus = 0.12 + 0.04 * weapon.affix_level
+                crit_rate = 0.045 + 0.015 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素爆发增伤+{dmg_bonus:.0%}，暴击+{crit_rate:.0%}",
                     target="Q",
@@ -151,7 +149,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                     crit_rate=crit_rate,
                 )
             case "喜多院十文字-名士振舞":
-                dmg_bonus = 0.045 + 0.015 * weapon.promote_level
+                dmg_bonus = 0.045 + 0.015 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素战技增伤+{dmg_bonus:.0%}",
                     target="E",
@@ -163,8 +161,8 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state, stack = f"{n}名", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.06 + 0.01 * weapon.promote_level) * stack
-                crit_rate = (0.02 + 0.01 * weapon.promote_level) * stack
+                atk_per = (0.06 + 0.01 * weapon.affix_level) * stack
+                crit_rate = (0.02 + 0.01 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}璃月角色，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，暴击+{crit_rate:.0%}",
                     atk=PoFValue(percent=atk_per),
@@ -174,7 +172,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                 match setting.label:
                     case "1":
                         setting.state = "至少两名"
-                        per = 0.12 + 0.04 * weapon.promote_level
+                        per = 0.12 + 0.04 * weapon.affix_level
                         buff_info.buff = Buff(
                             dsc=f"身边至少两名敌人，攻击+{per:.0%}(+{per*prop.atk_base:.0f})，防御+{per:.0%}(+{per*prop.def_base:.0f})",
                             atk=PoFValue(percent=per),
@@ -182,7 +180,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         )
                     case _:
                         setting.state = "少于两名"
-                        atk_per = 0.18 + 0.06 * weapon.promote_level
+                        atk_per = 0.18 + 0.06 * weapon.affix_level
                         buff_info.buff = Buff(
                             dsc=f"身边少于两名敌人，攻击+{per:.0%}(+{per*prop.atk_base:.0f})",
                             atk=PoFValue(percent=per),
@@ -193,7 +191,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.12 + 0.03 * weapon.promote_level) * stack
+                atk_per = (0.12 + 0.03 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，持续30秒，每层独立",
                     atk=PoFValue(percent=atk_per),
@@ -204,7 +202,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                dmg_bonus = (0.06 + 0.02 * weapon.promote_level) * stack
+                dmg_bonus = (0.06 + 0.02 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，普攻、重击增伤+{dmg_bonus:.0%}，持续12秒",
                     target=["NA", "CA"],
@@ -213,7 +211,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
             case "匣里灭辰-踏火止水":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.16 + 0.04 * weapon.promote_level
+                dmg_bonus = 0.16 + 0.04 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"对水或火附着下的敌人，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -222,7 +220,7 @@ def Polearm(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCalc
             # ************三星*************
             # ============================
             case "白缨枪-锐利":
-                dmg_bonus = 0.18 + 0.06 * weapon.promote_level
+                dmg_bonus = 0.18 + 0.06 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻增伤+{dmg_bonus:.0%}",
                     target="NA",
@@ -341,7 +339,7 @@ def Polearm_setting(weapon: Weapon, info: Info, labels: dict, name: str):
                     source=source,
                     name="断浪长鳍-驭浪的海祇民",
                     setting=BuffSetting(
-                        dsc="队伍中每点元素能量，增加元素爆发增伤" + f"增伤上限{30+10*weapon.promote_level}%",
+                        dsc="队伍中每点元素能量，增加元素爆发增伤" + f"增伤上限{30+10*weapon.affix_level}%",
                         label=labels.get("断浪长鳍-驭浪的海祇民", "320"),
                     ),
                 )

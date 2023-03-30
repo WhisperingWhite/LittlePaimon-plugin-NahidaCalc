@@ -21,18 +21,11 @@
 纳西妲计算器是一个用于角色伤害计算以及圣遗物评分的系统
 ## 丨安装方法
 将本项目直接clone或者下载压缩包解压到`LittlePaimon\plugins\`内即可
-
-**注意** 目前小派蒙中需要修改 在`LittlePaimon\databas\model\character.py`
-第308行后加入一下语句
-
-```python
-character.promote_level = int(data['propMap']['1002']['val'])
-```
 ## 丨指令
+* nhd<角色名>：查看面板详情,如果小派蒙中的信息更新过，会自动触发upd
 * upd<角色名> : 在小派蒙获取信息后，更新虚空内的信息
-* nhd重置：清楚虚空中的玩家信息
-* nhd<角色名>：查看面板详情
-* set<角色名>：设置某位角色的信息
+* nhd重置/clear：清楚虚空中的玩家信息
+* set<角色名>：设置某位角色的信息（必须在虚空中信息更新后操作）
 ## 丨历史更新
 [历史更新记录](History.md)
 ## 丨💸致谢
@@ -40,3 +33,6 @@ character.promote_level = int(data['propMap']['1002']['val'])
 
 ## 已完成角色
 冰：甘雨、绫华
+火：胡桃
+风：温迪
+水：夜兰

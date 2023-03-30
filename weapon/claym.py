@@ -17,10 +17,10 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         "0",
                         "1",
                     ]:
-                        atk_per = (0.15 + 0.05 * weapon.promote_level) * (
+                        atk_per = (0.15 + 0.05 * weapon.affix_level) * (
                             int(n1) + int(n2)
                         )
-                        hp_per = (0.24 + 0.08 * weapon.promote_level) * int(n3)
+                        hp_per = (0.24 + 0.08 * weapon.affix_level) * int(n3)
                         setting.state = f"触发{int(n1)+int(n2)}种效果"
                         if n3 == "1":
                             setting.state += "，无护盾"
@@ -35,7 +35,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                     hp=PoFValue(percent=hp_per),
                 )
             case "赤角石溃杵-御伽大王御伽话":
-                scaler = 0.3 + 0.1 * weapon.promote_level
+                scaler = 0.3 + 0.1 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"普攻、重击倍率+{scaler:.0%}防御",
                     target=["NA", "CA"],
@@ -44,7 +44,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "松籁响起之时-揭旗的叛逆之歌":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.15 + 0.05 * weapon.promote_level
+                atk_per = 0.15 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"消耗所有低语之符，全队攻击+{atk_per:.0%}，持续12秒",
                     atk=PoFValue(percent=atk_per),
@@ -56,7 +56,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state = f"{n}层，有护盾" if shield == 2 else f"{n}层，无护盾"
                     case _:
                         setting.state, stack, shield = "×", 0, 0
-                atk_per = (0.03 + 0.01 * weapon.promote_level) * stack * shield
+                atk_per = (0.03 + 0.01 * weapon.affix_level) * stack * shield
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -64,7 +64,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "狼的末路-如狼般狩猎者":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.3 + 0.1 * weapon.promote_level
+                atk_per = 0.3 + 0.1 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"消命中生命低于30%的敌人12秒内，全队攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})",
                     atk=PoFValue(percent=atk_per),
@@ -75,22 +75,22 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "饰铁之花-风与花的密语":
                 if setting.label == "-":
                     setting.state = "×"
-                atk_per = 0.12 + 0.03 * weapon.promote_level
-                elem_ma = 36 + 12 * weapon.promote_level
+                atk_per = 0.12 + 0.03 * weapon.affix_level
+                elem_ma = 36 + 12 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素战技命中或触发元素反应12秒内，全队攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，精通+{elem_ma}",
                     atk=PoFValue(percent=atk_per),
                     elem_mastery=elem_ma,
                 )
             case "玛海菈的水色-沙上楼阁":
-                percent = 0.18 + 0.06 * weapon.promote_level
+                percent = 0.18 + 0.06 * weapon.affix_level
                 atk = prop.elem_mastery * percent
                 buff_info.buff = Buff(
                     dsc=f"基于精通的{percent:.0%}，攻击+({atk:.0f})",
                     atk=PoFValue(fix=atk),
                 )
             case "玛海菈的水色-沙上楼阁(队友)":
-                percent = 0.18 + 0.06 * weapon.promote_level
+                percent = 0.18 + 0.06 * weapon.affix_level
                 atk = prop.elem_mastery * percent * 0.3
                 buff_info.buff = Buff(
                     dsc=f"队友攻击+{atk:.0f}",
@@ -99,7 +99,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "森林王器-森林的瑞佑":
                 if setting.label == "-":
                     setting.state = "×"
-                elem_ma = 45 + 15 * weapon.promote_level
+                elem_ma = 45 + 15 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"拾取种识之叶12秒内，精通+{elem_ma}",
                     elem_mastery=elem_ma,
@@ -110,8 +110,8 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                     if (n := int(setting.label)) <= 360:
                         setting.state, stack = f"{n}点能量上限", n
                 dmg_bonus = min(
-                    (0.09 + 0.03 * weapon.promote_level) * stack,
-                    0.3 + 0.1 * weapon.promote_level,
+                    (0.09 + 0.03 * weapon.affix_level) * stack,
+                    0.3 + 0.1 * weapon.affix_level,
                 )
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}，元素爆发增伤+{dmg_bonus:.0%}",
@@ -119,14 +119,14 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                     dmg_bonus=dmg_bonus,
                 )
             case "衔珠海皇-海洋的胜利":
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素爆发增伤+{dmg_bonus:.0%}",
                     target="Q",
                     dmg_bonus=dmg_bonus,
                 )
             case "桂木斩长正-名士振舞":
-                dmg_bonus = 0.045 + 0.015 * weapon.promote_level
+                dmg_bonus = 0.045 + 0.015 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"元素战技增伤+{dmg_bonus:.0%}",
                     target="E",
@@ -138,8 +138,8 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{n}名", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.06 + 0.01 * weapon.promote_level) * stack
-                crit_rate = (0.02 + 0.01 * weapon.promote_level) * stack
+                atk_per = (0.06 + 0.01 * weapon.affix_level) * stack
+                crit_rate = (0.02 + 0.01 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}璃月角色，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，暴击+{crit_rate:.0%}",
                     atk=PoFValue(percent=atk_per),
@@ -151,7 +151,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                dmg_bonus = (0.05 + 0.01 * weapon.promote_level) * stack
+                dmg_bonus = (0.05 + 0.01 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，增伤{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -162,7 +162,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.12 + 0.03 * weapon.promote_level) * stack
+                atk_per = (0.12 + 0.03 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，持续30秒，每层独立",
                     atk=PoFValue(percent=atk_per),
@@ -173,7 +173,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                per = (0.045 + 0.015 * weapon.promote_level) * stack
+                per = (0.045 + 0.015 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{per:.0%}(+{per*prop.atk_base:.0f})，防御+{per:.0%}(+{per*prop.def_base:.0f})，持续6秒",
                     atk=PoFValue(percent=per),
@@ -182,7 +182,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "雨裁-止水息雷":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.16 + 0.04 * weapon.promote_level
+                dmg_bonus = 0.16 + 0.04 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"敌方水或雷附着，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -196,7 +196,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
                         setting.state, stack = f"{n}层", int(n)
                     case _:
                         setting.state, stack = "×", 0
-                atk_per = (0.05 + 0.01 * weapon.promote_level) * stack
+                atk_per = (0.05 + 0.01 * weapon.affix_level) * stack
                 buff_info.buff = Buff(
                     dsc=f"{setting.state}效果，攻击+{atk_per:.0%}(+{atk_per*prop.atk_base:.0f})，持续6秒",
                     atk=PoFValue(percent=atk_per),
@@ -204,7 +204,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "沐浴龙血的剑-踏火息雷":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.09 + 0.03 * weapon.promote_level
+                dmg_bonus = 0.09 + 0.03 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"敌方火或雷附着，增伤+{dmg_bonus:.0%}",
                     dmg_bonus=dmg_bonus,
@@ -212,7 +212,7 @@ def Claymore(weapon: Weapon, buff_list: list[BuffInfo], info: Info, prop: DmgCal
             case "铁影阔剑-不屈":
                 if setting.label == "-":
                     setting.state = "×"
-                dmg_bonus = 0.25 + 0.05 * weapon.promote_level
+                dmg_bonus = 0.25 + 0.05 * weapon.affix_level
                 buff_info.buff = Buff(
                     dsc=f"生命低于70%时，重击增伤+{dmg_bonus:.0%}",
                     target="CA",
@@ -322,8 +322,7 @@ def Claymore_setting(weapon: Weapon, info: Info, labels: dict, name: str):
                     source=source,
                     name="恶王丸-驭浪的海祇民",
                     setting=BuffSetting(
-                        dsc="队伍中每点元素能量，增加元素爆发增伤，"
-                        + f"增伤上限{30+10*weapon.promote_level}%",
+                        dsc="队伍中每点元素能量，增加元素爆发增伤，" + f"增伤上限{30+10*weapon.affix_level}%",
                         label=labels.get("恶王丸-驭浪的海祇民", "320"),
                     ),
                 )

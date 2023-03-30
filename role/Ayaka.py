@@ -67,7 +67,7 @@ class Ayaka(Role):
         """神里流·霜灭"""
         calc = self.create_calc()
         scaler = float(
-            self.get_scaler("神里流·霜灭", self.talents[2].level, "切割伤害").replace("%", "")
+            self.get_scaler("神里流·霜灭", self.talents[3].level, "切割伤害").replace("%", "")
         )
         calc.set(
             value_type="Q",
@@ -77,16 +77,16 @@ class Ayaka(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    category: str = "冻结主C"
+    category: str = "前台绫"
     """角色所属的流派，影响圣遗物分数计算"""
-    cate_list: list = ["冻结主C", "副C"]
+    cate_list: list = ["前台绫", "后台绫"]
     """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
         match self.category:
-            case x if x in ["冻结主C", "副C"]:
+            case x if x in ["前台绫", "后台绫"]:
                 return ["攻击", "攻击%", "冰伤", "暴击", "暴伤"]
             case _:
                 return ["攻击", "攻击%", "冰伤", "暴击", "暴伤"]
@@ -182,17 +182,17 @@ class Ayaka(Role):
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
-            case "冻结主C":
+        match self.category:
+            case "前台绫":
                 return {
                     "充能效率阈值": 100,
                     "神里流·倾": -1,
                     "神里流·冰华": -1,
                     "神里流·霜灭": 10,
                 }
-            case "副C":
+            case "后台绫":
                 return {
                     "充能效率阈值": 160,
                     "神里流·倾": 0,

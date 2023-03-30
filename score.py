@@ -1,11 +1,9 @@
 import typing
 from copy import deepcopy
 
-import numpy as np
-
 from LittlePaimon.database import Artifact, EquipProperty
 
-from .classmodel import Buff, BuffInfo, DmgBonus, PoFValue, RelicScore
+from .classmodel import BuffInfo, DmgBonus, PoFValue, RelicScore
 
 if typing.TYPE_CHECKING:
     from .role import Role
@@ -78,7 +76,7 @@ def extract_prop(role: "Role", slot: EquipProperty):
     """去除属性"""
     match slot.name:
         case "百分比生命值":
-            role.prop.hp -= role.prop.hp * slot.value / 100
+            role.prop.hp -= role.prop.hp_base * slot.value / 100
         case "生命值":
             role.prop.hp -= slot.value
         case "百分比攻击力":
@@ -123,11 +121,11 @@ def get_score(role: "Role", true_role: "Role", type: str):
     threshold = role.dmg_list[0].weight / 100
     if threshold > role.prop.recharge and "充能" not in valid_prop:
         valid_prop.append("充能")
-    elif threshold <= role.prop.recharge and "充能" in valid_prop:
-        valid_prop = [p for p in valid_prop if p != "充能"]
-    max_charge = max(
-        np.ceil((threshold - role.prop.recharge) / (slot_dict["充能"] / 100)), 0
-    )
+    # elif threshold <= role.prop.recharge and "充能" in valid_prop:
+    #     valid_prop = [p for p in valid_prop if p != "充能"]
+    # max_charge = max(
+    #     np.ceil((threshold - role.prop.recharge) / (slot_dict["充能"] / 100)), 0
+    # )
 
     main_prop_list = get_main_prop(valid_prop, type)
     prop_list: list[dict[str, int]] = []
@@ -144,7 +142,7 @@ def get_score(role: "Role", true_role: "Role", type: str):
                                 sub_prop_dist |= {p: [i + 1, j + 1, m + 1, n + 1][idx]}
                             if (
                                 sum(sub_prop_dist.values()) == len(sub_prop_dist) + 5
-                                and sub_prop_dist.get("充能", 0) <= max_charge
+                                # and sub_prop_dist.get("充能", 0) <= max_charge
                             ):
                                 prop_list.append(main_prop | sub_prop_dist)
     buff_list, prop_valid_list = get_buff(prop_list)
@@ -157,7 +155,6 @@ def get_score(role: "Role", true_role: "Role", type: str):
         目前b 取 +inf
         """
         if x < threshold:
-            b = 5
             return 1 / (1 + 7.29 / slot_dict["充能"] * (threshold - x))
         return 1
 
@@ -171,7 +168,7 @@ def get_score(role: "Role", true_role: "Role", type: str):
                 continue
             if info.weight > 0:
                 score += info.weight * (info.exp_value / dmg_base[i].exp_value)
-        score *= compens_curve(role.prop.recharge / 100)
+        score *= compens_curve(role.calc_recharge)
         return score
 
     base_score = calc_score(role)
@@ -264,8 +261,8 @@ def get_buff(props: list[dict[str, int]]):
 
 def create_buff(dic: dict[str, int]):
     buff = BuffInfo(
+        source="calc",
         buff_type="propbuff",
-        buff=Buff(),
     )
     for key, value in dic.items():
         match key:

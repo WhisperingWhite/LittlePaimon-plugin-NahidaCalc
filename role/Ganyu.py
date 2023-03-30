@@ -50,8 +50,8 @@ class Ganyu(Role):
         calc = self.create_calc()
         scaler = sum(
             [
-                float(i.replace("%", ""))
-                for i in self.get_scaler(
+                float(num.replace("%", ""))
+                for num in self.get_scaler(
                     "普通攻击·流天射术",
                     self.talents[0].level,
                     "霜华矢命中伤害",

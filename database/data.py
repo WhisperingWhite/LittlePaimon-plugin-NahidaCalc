@@ -65,3 +65,4 @@ class CalcInfo(Model):
             gim = GenshinInfoManager(cls.user_id, cls.uid)
             charc = run(gim.get_character(name=partn, data_source="enka"))
             output_list.append(get_role(charc))
+        return output_list

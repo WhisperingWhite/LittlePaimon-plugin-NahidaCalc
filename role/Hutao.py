@@ -1,4 +1,12 @@
-from ..classmodel import Dmg, Buff, BuffInfo, DmgBonus, Multiplier, PoFValue
+from ..classmodel import (
+    Buff,
+    BuffInfo,
+    BuffSetting,
+    Dmg,
+    DmgBonus,
+    Multiplier,
+    PoFValue,
+)
 from ._model import Role
 
 
@@ -64,10 +72,32 @@ class Hutao(Role):
             atk=PoFValue(fix=atk),
         )
 
+    def skill_Q(self, dmg_info: Dmg, reaction=""):
+        """安神秘法"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("安神秘法", self.talents[2].level, "低血量时技能伤害").replace("%", "")
+        )
+        calc.set(
+            value_type="Q",
+            elem_type="pyro",
+            reaction_type=reaction,
+            multiplier=Multiplier(atk=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    category: str = "蒸胡"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["蒸胡"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case x if x in ["蒸胡"]:
+                return ["生命%", "生命", "攻击%", "火伤", "暴击", "暴伤", "精通"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -80,6 +110,7 @@ class Hutao(Role):
                     name="蝶隐之时",
                     buff_range="party",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("蝶隐之时", "○")),
                 )
             )
             if self.info.ascension >= 4:
@@ -88,6 +119,7 @@ class Hutao(Role):
                         source=f"{self.name}-T2",
                         name="血之灶火",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("血之灶火", "○")),
                     )
                 )
         # 命座
@@ -98,6 +130,7 @@ class Hutao(Role):
                     name="伴君眠花房",
                     buff_range="party",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("伴君眠花房", "○")),
                 )
             )
             if self.info.constellation >= 6:
@@ -106,6 +139,7 @@ class Hutao(Role):
                         source=f"{self.name}-C6",
                         name="幽蝶能留一缕芳",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("幽蝶能留一缕芳", "○")),
                     )
                 )
         # 技能
@@ -114,6 +148,7 @@ class Hutao(Role):
                 source=f"{self.name}-E",
                 name="蝶引来生",
                 buff_type="transbuff",
+                setting=BuffSetting(label=labels.get("蝶引来生", "○")),
             )
         )
         return output
@@ -149,6 +184,14 @@ class Hutao(Role):
                 weight=weights.get("往生秘传枪法-蒸发", 0),
                 exclude_buff=ex_buffs.get("往生秘传枪法-蒸发", []),
             ),
+            # Dmg(
+            #     index=2,
+            #     source="Q",
+            #     name="安神秘法-蒸发",
+            #     dsc="Q一段",
+            #     weight=weights.get("安神秘法-蒸发", 0),
+            #     exclude_buff=ex_buffs.get("安神秘法-蒸发", []),
+            # ),
         ]
 
     def dmg(self) -> list[Dmg]:
@@ -158,11 +201,19 @@ class Hutao(Role):
                 match dmg.name:
                     case "往生秘传枪法-蒸发":
                         self.skill_A(dmg, "蒸发")
+                    case "安神秘法-蒸发":
+                        self.skill_Q(dmg, "蒸发")
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "蒸胡":
+                return {
+                    "充能效率阈值": 100,
+                    "往生秘传枪法-蒸发": 10,
+                    "安神秘法-蒸发": -1,
+                }
             case _:
                 return {
                     "充能效率阈值": 100,
