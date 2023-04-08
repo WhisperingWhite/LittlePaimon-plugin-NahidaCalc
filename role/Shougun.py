@@ -38,7 +38,7 @@ class Shougun(Role):
         )
 
     def buff_E(self, buff_info: BuffInfo):
-        """神变•恶曜开眼"""
+        """神变·恶曜开眼"""
         setting = buff_info.setting
         match setting.label:
             case x if x in ["40", "50", "60", "70", "80", "90"]:
@@ -46,7 +46,7 @@ class Shougun(Role):
             case _:
                 setting.state, energy = "×", 0
         scaler = float(
-            self.get_scaler("神变•恶曜开眼", self.talents[1].level, "元素爆发伤害提高")
+            self.get_scaler("神变·恶曜开眼", self.talents[1].level, "元素爆发伤害提高")
             .replace("%", "")
             .replace("每点元素能量", "")
         )
@@ -63,19 +63,20 @@ class Shougun(Role):
     """梦想一心加成倍率"""
 
     def buff_Q(self, buff_info: BuffInfo):
-        """奥义•梦想真说·诸愿百眼之轮"""
+        """奥义·梦想真说·诸愿百眼之轮"""
         setting = buff_info.setting
         if x := setting.label.isdigit():
             setting.state, energy = f"{x}层", min(int(x), 60)
         else:
             setting.state, energy = "×", 0
-        scaler1, scaler2 = float(
-            self.get_scaler("奥义•梦想真说", self.talents[2].level, "愿力加成")
+        scaler1, scaler2 = [
+            float(num)
+            for num in self.get_scaler("奥义·梦想真说", self.talents[2].level, "愿力加成")
             .replace("%", "")
             .replace("每层", "")
             .replace("攻击力", "")
             .split("/")
-        )
+        ]
         self.hitotachi_bonus = energy * scaler1
         self.isshin_bonus = energy * scaler2
         buff_info.buff = Buff(
@@ -86,7 +87,7 @@ class Shougun(Role):
         """奥义•梦想真说"""
         calc = self.create_calc()
         scaler = float(
-            self.get_scaler("奥义•梦想真说", self.talents[2].level, "梦想一刀基础伤害").replace(
+            self.get_scaler("奥义·梦想真说", self.talents[2].level, "梦想一刀基础伤害").replace(
                 "%", ""
             )
         )
@@ -98,10 +99,29 @@ class Shougun(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    def hyperbloom(self, dmg_info: Dmg):
+        """超绽放"""
+        calc = self.create_calc()
+        calc.set(
+            reaction_type="超绽放",
+        )
+        dmg_info.exp_value = int(calc.calc_dmg.get_trans_reac_dmg())
+
+    category: str = "充能前台"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["充能前台", "精通后台"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "充能前台":
+                return ["攻击", "攻击%", "雷伤", "暴击", "暴伤", "充能"]
+            case "精通后台":
+                return ["精通"]
+            case _:
+                return ["攻击", "攻击%", "雷伤", "暴击", "暴伤", "充能"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -187,6 +207,13 @@ class Shougun(Role):
                 weight=weights.get("奥义•梦想真说", 0),
                 exclude_buff=ex_buffs.get("奥义•梦想真说", []),
             ),
+            Dmg(
+                index=2,
+                name="超绽放",
+                dsc="每枚种子",
+                weight=weights.get("超绽放", 0),
+                exclude_buff=ex_buffs.get("超绽放", []),
+            ),
         ]
 
     def dmg(self) -> list[Dmg]:
@@ -196,13 +223,28 @@ class Shougun(Role):
                 match dmg.name:
                     case "奥义•梦想真说":
                         self.skill_Q(dmg)
+                    case "超绽放":
+                        self.hyperbloom(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "充能前台":
+                return {
+                    "充能效率阈值": 270,
+                    "奥义•梦想真说": 10,
+                    "超绽放": 0,
+                }
+            case "精通后台":
+                return {
+                    "充能效率阈值": 150,
+                    "奥义•梦想真说": 0,
+                    "超绽放": 10,
+                }
             case _:
                 return {
-                    "充能效率阈值": 100,
+                    "充能效率阈值": 250,
                     "奥义•梦想真说": 10,
+                    "超绽放": -1,
                 }

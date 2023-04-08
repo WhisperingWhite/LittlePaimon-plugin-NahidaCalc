@@ -37,15 +37,15 @@ def get_relicsuit(relics: Artifacts):
 
 def get_rank(score: float):
     match score:
-        case x if x >= 4:
+        case x if x >= 8:
             return "SSS"
-        case x if x >= 3.5:
+        case x if x >= 7:
             return "SS"
-        case x if x >= 3:
+        case x if x >= 6:
             return "S"
-        case x if x >= 2:
+        case x if x >= 4:
             return "A"
-        case x if x >= 1:
+        case x if x >= 2:
             return "B"
         case _:
             return "C"

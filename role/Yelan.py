@@ -112,16 +112,16 @@ class Yelan(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    category: str = "后台夜"
+    category: str = "后台水C"
     """角色所属的流派，影响圣遗物分数计算"""
-    cate_list: list = ["后台夜", "蒸夜"]
+    cate_list: list = ["后台水C", "蒸夜"]
     """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
         match self.category:
-            case "后台夜":
+            case "后台水C":
                 return ["生命", "生命%", "水伤", "暴击", "暴伤", "充能"]
             case "蒸夜":
                 return ["生命", "生命%", "水伤", "暴击", "暴伤", "精通"]
@@ -246,7 +246,7 @@ class Yelan(Role):
     def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
         match self.category:
-            case "后台夜":
+            case "后台水C":
                 return {
                     "充能效率阈值": 180,
                     "萦络纵命索": -1,

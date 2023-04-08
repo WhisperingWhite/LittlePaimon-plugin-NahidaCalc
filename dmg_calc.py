@@ -215,7 +215,10 @@ class DmgCalc:
     @property
     def crit_hit_zone(self):
         """必定暴击"""
-        return 1 + self.crit_dmg
+        if self.crit_rate > 0:
+            return 1 + self.crit_dmg
+        else:
+            return 1.0
 
     @property
     def elem_res_zone(self):

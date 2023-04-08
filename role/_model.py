@@ -208,9 +208,9 @@ class Role:
         """伤害列表"""
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
             case _:
                 return {}
 

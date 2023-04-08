@@ -17,19 +17,23 @@ class Nilou(Role):
         """翩舞永世之梦"""
         reac_coeff = min((prop.hp - 30000) / 1000 * 0.09, 4)
         buff_info.buff = Buff(
-            dsc=f"妮露生命值上限超过30000的部分，每1000点丰穰之核反应系数+9%，至多400%(+{reac_coeff*100}%)",
+            dsc=f"丰穰之核反应系数+{reac_coeff:.0%}",
             reaction_coeff=ReaFactor(bloom=reac_coeff),
         )
 
-    C1_lumi: float = 0.0
-    """C1水月增伤"""
+    def Skill_T2(self, dmg_info: Dmg):
+        """翩舞永世之梦"""
+        calc = self.create_calc()
+        reac_coeff = min((calc.calc_dmg.hp - 30000) / 1000 * 9, 400)
+        dmg_info.exp_value = reac_coeff
 
     def buff_C1(self, buff_info: BuffInfo):
         """却月的轻舞"""
         buff_info.buff = Buff(
             dsc="水月增伤+65%",
+            target="E",
+            dmg_bonus=0.65,
         )
-        self.C1_lumi = 0.65
 
     def buff_C2(self, buff_info: BuffInfo):
         """星天的花雨"""
@@ -55,18 +59,69 @@ class Nilou(Role):
             crit_dmg=0.012 * s,
         )
 
+    def Skill_E(self, dmg_info: Dmg, reaction=""):
+        """七域舞步"""
+        calc = self.create_calc()
+        (scaler,) = float(
+            self.get_scaler("七域舞步", self.talents[1].level, "水月/水轮伤害")
+            .replace("生命值上限", "")
+            .replace("%", "")
+            .split("/")
+        )
+        calc.set(
+            value_type="E",
+            elem_type="hydro",
+            reaction_type=reaction,
+            multiplier=Multiplier(hp=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    def Skill_Q(self, dmg_info: Dmg, reaction=""):
+        """浮莲舞步·远梦聆泉"""
+        calc = self.create_calc()
+        scaler1 = float(
+            self.get_scaler("浮莲舞步·远梦聆泉", self.talents[2].level, "技能伤害").replace(
+                "%生命值上限", ""
+            )
+        )
+        scaler2 = float(
+            self.get_scaler("浮莲舞步·远梦聆泉", self.talents[2].level, "永世流沔伤害").replace(
+                "%生命值上限", ""
+            )
+        )
+        calc.set(
+            value_type="Q",
+            elem_type="hydro",
+            reaction_type=reaction,
+            multiplier=Multiplier(hp=scaler1 + scaler2),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
     def bloom(self, dmg_info: Dmg):
         """金杯的丰馈"""
         calc = self.create_calc()
         calc.set(
-            reaction_type="绽放",
+            reaction_type="原绽放",
         )
-        dmg_info.exp_value = int(calc.calc_dmg.get_trans_reac_dmg())
+        dmg_info.exp_value = calc.calc_dmg.get_trans_reac_dmg()
+
+    category: str = "妮绽放"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["妮绽放", "蒸妮", "纯水妮"]
+    """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "妮绽放":
+                return ["生命", "生命%", "精通"]
+            case "蒸妮":
+                return ["生命", "生命%", "水伤", "暴击", "暴伤", "充能", "精通"]
+            case "纯水妮":
+                return ["生命", "生命%", "水伤", "暴击", "暴伤", "充能"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -86,6 +141,7 @@ class Nilou(Role):
                     BuffInfo(
                         source=f"{self.name}-T2",
                         name="翩舞永世之梦",
+                        buff_range="all",
                     )
                 )
         # 命座
@@ -147,10 +203,51 @@ class Nilou(Role):
             ),
             Dmg(
                 index=1,
+                source="E",
+                name="七域舞步",
+                dsc="剑舞步水月",
+                weight=weights.get("七域舞步", 0),
+                exclude_buff=ex_buffs.get("七域舞步", []),
+            ),
+            Dmg(
+                index=2,
+                source="E",
+                name="七域舞步-蒸发",
+                dsc="剑舞步水月蒸发",
+                weight=weights.get("七域舞步-蒸发", 0),
+                exclude_buff=ex_buffs.get("七域舞步-蒸发", []),
+            ),
+            Dmg(
+                index=3,
+                source="Q",
+                name="浮莲舞步·远梦聆泉",
+                dsc="Q两段",
+                weight=weights.get("浮莲舞步·远梦聆泉", 0),
+                exclude_buff=ex_buffs.get("浮莲舞步·远梦聆泉", []),
+            ),
+            Dmg(
+                index=4,
+                source="Q",
+                name="浮莲舞步·远梦聆泉-蒸发",
+                dsc="Q两段蒸发",
+                weight=weights.get("浮莲舞步·远梦聆泉-蒸发", 0),
+                exclude_buff=ex_buffs.get("浮莲舞步·远梦聆泉-蒸发", []),
+            ),
+            Dmg(
+                index=5,
+                source="T1",
                 name="金杯的丰馈",
                 dsc="每枚种子爆炸",
                 weight=weights.get("金杯的丰馈", 0),
                 exclude_buff=ex_buffs.get("金杯的丰馈", []),
+            ),
+            Dmg(
+                index=6,
+                source="T2",
+                name="翩舞永世之梦",
+                dsc="种子增伤",
+                weight=weights.get("翩舞永世之梦", 0),
+                exclude_buff=ex_buffs.get("翩舞永世之梦", []),
             ),
         ]
 
@@ -159,15 +256,60 @@ class Nilou(Role):
         for dmg in self.dmg_list:
             if dmg.weight != 0:
                 match dmg.name:
+                    case "七域舞步":
+                        self.Skill_E(dmg)
+                    case "七域舞步-蒸发":
+                        self.Skill_E(dmg, "蒸发")
+                    case "浮莲舞步·远梦聆泉":
+                        self.Skill_Q(dmg)
+                    case "浮莲舞步·远梦聆泉-蒸发":
+                        self.Skill_Q(dmg, "蒸发")
                     case "金杯的丰馈":
                         self.bloom(dmg)
+                    case "翩舞永世之梦":
+                        self.Skill_T2(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
-            case _:
+        match self.category:
+            case "妮绽放":
                 return {
                     "充能效率阈值": 100,
-                    "金杯的丰馈": 10,
+                    "七域舞步": 0,
+                    "七域舞步-蒸发": 0,
+                    "浮莲舞步·远梦聆泉": 0,
+                    "浮莲舞步·远梦聆泉-蒸发": 0,
+                    "翩舞永世之梦": 10,
+                    "金杯的丰馈": 5,
+                }
+            case "蒸妮":
+                return {
+                    "充能效率阈值": 120,
+                    "七域舞步": 0,
+                    "七域舞步-蒸发": 5,
+                    "浮莲舞步·远梦聆泉": 0,
+                    "浮莲舞步·远梦聆泉-蒸发": 10,
+                    "翩舞永世之梦": 0,
+                    "金杯的丰馈": 0,
+                }
+            case "纯水妮":
+                return {
+                    "充能效率阈值": 120,
+                    "七域舞步": 10,
+                    "七域舞步-蒸发": 0,
+                    "浮莲舞步·远梦聆泉": 10,
+                    "浮莲舞步·远梦聆泉-蒸发": 0,
+                    "翩舞永世之梦": 0,
+                    "金杯的丰馈": 5,
+                }
+            case _:
+                return {
+                    "充能效率阈值": 150,
+                    "七域舞步": -1,
+                    "七域舞步-蒸发": -1,
+                    "浮莲舞步·远梦聆泉": -1,
+                    "浮莲舞步·远梦聆泉-蒸发": -1,
+                    "翩舞永世之梦": 10,
+                    "金杯的丰馈": 1,
                 }

@@ -79,17 +79,17 @@ class Venti(Role):
         )
         dmg_info.exp_value = int(calc.calc_dmg.get_trans_reac_dmg())
 
-    category: str = "充能副核"
+    category: str = "充能后台"
     """角色所属的流派，影响圣遗物分数计算"""
-    cate_list: list = ["充能副核", "精通副核"]
+    cate_list: list = ["充能后台", "精通后台"]
     """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         match self.category:
-            case "充能副核":
+            case "充能后台":
                 return ["攻击", "攻击%", "风伤", "暴击", "暴伤", "充能"]
-            case "精通副核":
+            case "精通后台":
                 return ["充能", "精通"]
             case _:
                 return ["攻击%", "风伤", "暴击", "暴伤", "充能", "精通"]
@@ -193,14 +193,14 @@ class Venti(Role):
     def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
         match self.category:
-            case "充能副核":
+            case "充能后台":
                 return {
                     "充能效率阈值": 200,
                     "高天之歌": 10,
                     "风神之诗": -1,
                     "扩散": -1,
                 }
-            case "精通副核":
+            case "精通后台":
                 return {
                     "充能效率阈值": 240,
                     "高天之歌": 0,

@@ -1,4 +1,5 @@
 import typing
+from asyncio import run
 from copy import deepcopy
 
 from LittlePaimon.database import Artifact, EquipProperty
@@ -141,7 +142,8 @@ def get_score(role: "Role", true_role: "Role", type: str):
                             for idx, p in enumerate(props):
                                 sub_prop_dist |= {p: [i + 1, j + 1, m + 1, n + 1][idx]}
                             if (
-                                sum(sub_prop_dist.values()) == len(sub_prop_dist) + 5
+                                sum(sub_prop_dist.values())
+                                == len(sub_prop_dist) + 5
                                 # and sub_prop_dist.get("充能", 0) <= max_charge
                             ):
                                 prop_list.append(main_prop | sub_prop_dist)
@@ -161,6 +163,7 @@ def get_score(role: "Role", true_role: "Role", type: str):
     dmg_base = role.dmg()
 
     def calc_score(role: "Role"):
+        run(role.update_buff())
         dmg_list = role.dmg()
         score = 0.0
         for i, info in enumerate(dmg_list):
@@ -193,9 +196,11 @@ def get_score(role: "Role", true_role: "Role", type: str):
             max_score = est_score
         scores.append(est_score)
 
-    if max_score == 0:
+    if max_score == max_main_score:
+        return 10
+    if true_score < max_main_score:
         return 0
-    return (true_score - max_main_score) / (max_score - max_main_score) * 6
+    return (true_score - max_main_score) / (max_score - max_main_score) * 10
 
 
 def get_main_prop(valid_prop: list[str], type: str):

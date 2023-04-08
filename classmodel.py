@@ -378,9 +378,9 @@ class Dmg(BaseModel):
     """
     dsc: str = ""
     """描述"""
-    exp_value: int = 0
+    exp_value: float = 0
     """期望伤害"""
-    crit_value: int = 0
+    crit_value: float = 0
     """暴击伤害"""
     weight: int = 0
     """权重 -1-10"""

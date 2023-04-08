@@ -77,16 +77,16 @@ class Ayaka(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    category: str = "前台绫"
+    category: str = "前台冰C"
     """角色所属的流派，影响圣遗物分数计算"""
-    cate_list: list = ["前台绫", "后台绫"]
+    cate_list: list = ["前台冰C", "后台冰C"]
     """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
         match self.category:
-            case x if x in ["前台绫", "后台绫"]:
+            case x if x in ["前台冰C", "后台冰C"]:
                 return ["攻击", "攻击%", "冰伤", "暴击", "暴伤"]
             case _:
                 return ["攻击", "攻击%", "冰伤", "暴击", "暴伤"]
@@ -185,14 +185,14 @@ class Ayaka(Role):
     def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
         match self.category:
-            case "前台绫":
+            case "前台冰C":
                 return {
                     "充能效率阈值": 100,
                     "神里流·倾": -1,
                     "神里流·冰华": -1,
                     "神里流·霜灭": 10,
                 }
-            case "后台绫":
+            case "后台冰C":
                 return {
                     "充能效率阈值": 160,
                     "神里流·倾": 0,

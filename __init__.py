@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import (
     MessageEvent,
     PrivateMessageEvent,
 )
-from nonebot.params import ArgPlainText
+from nonebot.params import CommandArg, ArgPlainText
 from nonebot.plugin import PluginMetadata
 from nonebot.typing import T_State
 
@@ -91,10 +91,17 @@ clear = on_command(
 async def _(
     event: MessageEvent,
     players=CommandPlayer(only_cn=False),
+    args=CommandArg(),
+    characters=CommandCharacter(),
 ):
     user_id, uid = players[0].user_id, players[0].uid
-    logger.info("Nahida面板", f"清除{players[0].uid}数据")
-    await CalcInfo.filter(user_id=user_id, uid=uid).delete()
+    if not (text := args.extract_plain_text()) or text == "全部":
+        logger.info("Nahida面板", f"清除{players[0].uid}数据")
+        await CalcInfo.filter(user_id=user_id, uid=uid).delete()
+    else:
+        for char in characters:
+            logger.info("Nahida面板", f"清除{players[0].uid}{char}数据")
+            await CalcInfo.filter(user_id=user_id, uid=uid, name=char).delete()
     await clear.finish("已成功清除", at_sender=True)
 
 
