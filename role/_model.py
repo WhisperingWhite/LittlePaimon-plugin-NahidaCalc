@@ -112,11 +112,19 @@ class Role:
             self.weapon = charc.weapon
             self.prop = Calculator(charc.prop, charc.level)
             self.talents = charc.talents
-            self.scaler_table = (
-                load_json(JSON_DATA / "roles_data.json")
-                .get(charc.name, {})
-                .get("skill", [])
-            )
+            if charc.name in ["空", "荧"]:
+                self.scaler_table = (
+                    load_json(JSON_DATA / "roles_data.json")
+                    .get("旅行者", {})
+                    .get("skill", {})
+                    .get(charc.element, {})
+                )
+            else:
+                self.scaler_table = (
+                    load_json(JSON_DATA / "roles_data.json")
+                    .get(charc.name, {})
+                    .get("skill", {})
+                )
             self.info = Info(
                 level=charc.level,
                 element=charc.element,

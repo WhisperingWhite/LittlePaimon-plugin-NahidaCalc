@@ -15,6 +15,8 @@ class Hutao(Role):
 
     def buff_T1(self, buff_info: BuffInfo):
         """蝶隐之时"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="彼岸蝶舞结束8秒内，队友暴击+12%",
             crit_rate=0.12,
@@ -22,6 +24,8 @@ class Hutao(Role):
 
     def buff_T2(self, buff_info: BuffInfo):
         """血之灶火"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="生命值低于一半时,火伤+33%",
             elem_dmg_bonus=DmgBonus(pyro=0.2),
@@ -29,6 +33,8 @@ class Hutao(Role):
 
     def buff_C4(self, buff_info: BuffInfo):
         """伴君眠花房"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="血梅香状态下击败敌方15秒内，队友暴击+12%",
             crit_rate=0.12,
@@ -36,6 +42,8 @@ class Hutao(Role):
 
     def buff_C6(self, buff_info: BuffInfo):
         """幽蝶能留一缕芳"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="收到致命伤10秒内，暴击+100%",
             crit_rate=1,
@@ -60,6 +68,8 @@ class Hutao(Role):
 
     def buff_E(self, buff_info: BuffInfo):
         """蝶引来生"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         calc = self.create_calc()
         scaler = float(
             self.get_scaler("蝶引来生", self.talents[1].level, "攻击力提高").replace(

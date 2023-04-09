@@ -1,4 +1,12 @@
-from ..classmodel import Buff, BuffInfo, Dmg, DmgBonus, FixValue, Multiplier
+from ..classmodel import (
+    Buff,
+    BuffInfo,
+    BuffSetting,
+    Dmg,
+    DmgBonus,
+    FixValue,
+    Multiplier,
+)
 from ..dmg_calc import DmgCalc
 from ._model import Role
 
@@ -38,9 +46,7 @@ class Kokomi(Role):
         """水有常形"""
         calc = self.create_calc()
         scaler = float(
-            self.get_scaler("普通攻击·水有常形", self.talents[0].level, "重击伤害").replace(
-                "%", ""
-            )
+            self.get_scaler("普通攻击·水有常形", self.talents[0].level, "重击伤害").replace("%", "")
         )
         calc.set(
             value_type="CA",
@@ -96,13 +102,13 @@ class Kokomi(Role):
         """有效属性"""
         match self.category:
             case "水系奶辅":
-                return ["生命", "生命%", "充能"]
+                return ["生命", "生命%", "充能", "治疗"]
             case "精通水":
-                return ["精通", "生命", "生命%", "充能"]
+                return ["精通", "生命", "生命%", "充能", "治疗"]
             case "前台奶C":
-                return ["精通", "攻击%", "生命", "生命%", "水伤"]
+                return ["精通", "攻击%", "生命", "生命%", "水伤", "治疗"]
             case _:
-                return ["精通", "攻击%", "生命", "生命%", "水伤", "充能"]
+                return ["精通", "攻击%", "生命", "生命%", "水伤", "充能", "治疗"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -113,6 +119,7 @@ class Kokomi(Role):
                 BuffInfo(
                     source=f"{self.name}-T2",
                     name="真珠御呗",
+                    setting=BuffSetting(label=labels.get("真珠御呗", "○")),
                 )
             )
         # 命座
@@ -129,6 +136,7 @@ class Kokomi(Role):
                         source=f"{self.name}-C6",
                         name="珊瑚一心",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("珊瑚一心", "○")),
                     )
                 )
         # 技能
@@ -136,6 +144,7 @@ class Kokomi(Role):
             BuffInfo(
                 source=f"{self.name}-Q",
                 name="海人化羽",
+                setting=BuffSetting(label=labels.get("海人化羽", "○")),
             )
         )
         return output

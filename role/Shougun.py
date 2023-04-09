@@ -32,6 +32,8 @@ class Shougun(Role):
 
     def buff_C4(self, buff_info: BuffInfo, prop: DmgCalc):
         """誓奉常道"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc=f"梦想一心状态结束10秒内，队友攻击+30%(+{prop.atk_base*0.3:.0f})",
             atk=PoFValue(percent=0.3),
@@ -150,6 +152,7 @@ class Shougun(Role):
                         name="誓奉常道",
                         buff_range="party",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("誓奉常道", "○")),
                     )
                 )
         # 技能

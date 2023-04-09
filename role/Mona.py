@@ -25,7 +25,7 @@ class Mona(Role):
     def buff_C1(self, buff_info: BuffInfo):
         """沉没的预言"""
         buff_info.buff = Buff(
-            dsc="命中处于星异状态下敌人8秒内，感电、蒸发、水元素扩散反应系数+15%",
+            dsc="命中星异状态下敌人8秒内，感电、蒸发、水扩散反应系数+15%",
             reaction_coeff=ReaFactor(
                 vaporize=0.15,
                 charged=0.15,
@@ -78,10 +78,17 @@ class Mona(Role):
             dmg_bonus=dmg_bonus / 100,
         )
 
+    category: str = "增伤辅助"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["增伤辅助"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "增伤辅助":
+                return ["充能"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -176,9 +183,9 @@ class Mona(Role):
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
             case _:
                 return {
                     "充能效率阈值": 240,

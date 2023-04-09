@@ -65,7 +65,7 @@ def artifacts(buff_list: list[BuffInfo], info: Info, prop: DmgCalc):
                     setting.state = "×"
                 buff.buff = Buff(
                     dsc="元素战技或元素爆发命中8秒内，草抗-30%",
-                    resist_reduction=0.3,
+                    resist_reduction=DmgBonus(dendro=0.3),
                 )
             case "青玉4-幽谷祝祀":
                 buff.buff = Buff(

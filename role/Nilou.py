@@ -1,4 +1,12 @@
-from ..classmodel import Buff, BuffInfo, Dmg, DmgBonus, Multiplier, ReaFactor
+from ..classmodel import (
+    Buff,
+    BuffInfo,
+    BuffSetting,
+    Dmg,
+    DmgBonus,
+    Multiplier,
+    ReaFactor,
+)
 from ..dmg_calc import DmgCalc
 from ._model import Role
 
@@ -8,6 +16,8 @@ class Nilou(Role):
 
     def buff_T1(self, buff_info: BuffInfo):
         """折旋落英之庭"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="处于金杯的丰馈下，受到草元素攻击时，全队精通+100",
             elem_mastery=100,
@@ -37,6 +47,8 @@ class Nilou(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """星天的花雨"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="金杯的丰馈下，造成水伤10秒内，水抗-35%，触发绽放10秒内，草抗-35%",
             resist_reduction=DmgBonus(hydro=0.35, dendro=0.35),
@@ -44,6 +56,8 @@ class Nilou(Role):
 
     def buff_C4(self, buff_info: BuffInfo):
         """挽漪的节音"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="七域舞步的第三段命中8秒内，浮莲舞步·远梦聆泉增伤+50%",
             target="Q",
@@ -134,6 +148,7 @@ class Nilou(Role):
                     name="折旋落英之庭",
                     buff_range="all",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("折旋落英之庭", "○")),
                 )
             )
             if self.info.ascension >= 4:
@@ -157,6 +172,7 @@ class Nilou(Role):
                     BuffInfo(
                         source=f"{self.name}-C2",
                         name="星天的花雨",
+                        setting=BuffSetting(label=labels.get("星天的花雨", "○")),
                     )
                 )
                 if self.info.constellation >= 4:
@@ -164,6 +180,7 @@ class Nilou(Role):
                         BuffInfo(
                             source=f"{self.name}-C4",
                             name="挽漪的节音",
+                            setting=BuffSetting(label=labels.get("挽漪的节音", "○")),
                         )
                     )
                     if self.info.constellation >= 6:
@@ -245,7 +262,8 @@ class Nilou(Role):
                 index=6,
                 source="T2",
                 name="翩舞永世之梦",
-                dsc="种子增伤",
+                value_type="B",
+                dsc="全队种子增伤（%）",
                 weight=weights.get("翩舞永世之梦", 0),
                 exclude_buff=ex_buffs.get("翩舞永世之梦", []),
             ),

@@ -29,7 +29,7 @@ class PlayerGrass(Role):
         dmg_bonus1 = prop.elem_mastery * 0.15 / 100
         dmg_bonus2 = prop.elem_mastery * 0.1 / 100
         buff_info.buff = Buff(
-            dsc=f"基于元素精通，草缘剑增伤+{dmg_bonus1}%，偃草若化增伤+{dmg_bonus2}%",
+            dsc=f"基于元素精通，草缘剑增伤+{dmg_bonus1:.1%}，偃草若化增伤+{dmg_bonus2:.1%}",
         )
         self.T2_E_bonus = dmg_bonus1
         self.T2_Q_bonus = dmg_bonus2
@@ -38,16 +38,16 @@ class PlayerGrass(Role):
         """蕴思的霜草"""
         setting = buff_info.setting
         buff_info.buff = Buff(
-            dsc="风息激荡命中，风抗-20%",
-            resist_reduction=DmgBonus(anemo=0.2),
+            dsc="莲光遍照影响下，草伤+12%",
+            elem_dmg_bonus=DmgBonus(dendro=0.12),
         )
         match setting.label:
             case x if x in ["火", "水", "雷"]:
-                setting.state = f"{x}风"
-                buff_info.buff.dsc += f"，{x}抗-20%"
-                buff_info.buff.resist_reduction.set({x: 0.2})
+                setting.state = f"{x}转化"
+                buff_info.buff.dsc += f"发生{setting.state}，{x}伤+12%"
+                buff_info.buff.elem_dmg_bonus.set({x: 0.12})
 
-    def skill_E(self, dmg_info: Dmg):
+    def skill_E(self, dmg_info: Dmg, reaction=""):
         """草缘剑"""
         calc = self.create_calc()
         scaler = float(
@@ -57,12 +57,13 @@ class PlayerGrass(Role):
         calc.set(
             value_type="E",
             elem_type="dendro",
+            reaction_type=reaction,
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    def skill_Q(self, dmg_info: Dmg):
+    def skill_Q(self, dmg_info: Dmg, reaction=""):
         """偃草若化"""
         calc = self.create_calc()
         scaler = float(
@@ -72,15 +73,25 @@ class PlayerGrass(Role):
         calc.set(
             value_type="Q",
             elem_type="dendro",
+            reaction_type=reaction,
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    category: str = "副C"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["副C", "激化副C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "副C":
+                return ["攻击", "攻击%", "草伤", "暴击", "暴伤", "充能"]
+            case "激化副C":
+                return ["攻击", "攻击%", "草伤", "暴击", "暴伤", "充能", "精通"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -129,7 +140,7 @@ class PlayerGrass(Role):
                 case "蔓生的埜草":
                     self.buff_T1(buff)
                 case "繁庑的丛草":
-                    self.buff_T2(buff)
+                    self.buff_T2(buff, prop)
                 case "蕴思的霜草":
                     self.buff_C6(buff)
 
@@ -151,11 +162,27 @@ class PlayerGrass(Role):
             ),
             Dmg(
                 index=2,
+                source="E",
+                name="草缘剑-激化",
+                dsc="E一段激化",
+                weight=weights.get("草缘剑-激化", 0),
+                exclude_buff=ex_buffs.get("草缘剑-激化", []),
+            ),
+            Dmg(
+                index=3,
                 source="Q",
                 name="偃草若化",
                 dsc="Q草灯莲每下",
                 weight=weights.get("偃草若化", 0),
                 exclude_buff=ex_buffs.get("偃草若化", []),
+            ),
+            Dmg(
+                index=4,
+                source="Q",
+                name="偃草若化-激化",
+                dsc="Q草灯莲每下激化",
+                weight=weights.get("偃草若化-激化", 0),
+                exclude_buff=ex_buffs.get("偃草若化-激化", []),
             ),
         ]
 
@@ -166,16 +193,38 @@ class PlayerGrass(Role):
                 match dmg.name:
                     case "草缘剑":
                         self.skill_E(dmg)
+                    case "草缘剑-激化":
+                        self.skill_E(dmg, "蔓激化")
                     case "偃草若化":
                         self.skill_Q(dmg)
+                    case "偃草若化-激化":
+                        self.skill_Q(dmg, "蔓激化")
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "副C":
+                return {
+                    "充能效率阈值": 200,
+                    "草缘剑": 10,
+                    "草缘剑-激化": 0,
+                    "偃草若化": 10,
+                    "偃草若化-激化": 0,
+                }
+            case "激化副C":
+                return {
+                    "充能效率阈值": 200,
+                    "草缘剑": 0,
+                    "草缘剑-激化": 10,
+                    "偃草若化": 0,
+                    "偃草若化-激化": 10,
+                }
             case _:
                 return {
                     "充能效率阈值": 180,
                     "草缘剑": 10,
+                    "草缘剑-激化": 10,
                     "偃草若化": 10,
+                    "偃草若化-激化": 10,
                 }

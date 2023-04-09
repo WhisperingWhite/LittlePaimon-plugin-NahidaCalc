@@ -45,6 +45,8 @@ class Nahida(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """正等善见之根"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="蕴种印状态下，触发激化系列反应8秒内，减防+30%",
             def_reduction=0.3,
@@ -63,6 +65,18 @@ class Nahida(Role):
             elem_mastery=elem_ma,
         )
 
+    def Conste_C6(self, dmg_info: Dmg, reaction=""):
+        """大辨圆成之实"""
+        calc = self.create_calc()
+        calc.set(
+            value_type="E",
+            elem_type="dendro",
+            reaction_type=reaction,
+            multiplier=Multiplier(atk=200, em=400),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
     def skill_E(self, dmg_info: Dmg, reaction=""):
         """所闻遍计"""
         calc = self.create_calc()
@@ -78,18 +92,6 @@ class Nahida(Role):
             elem_type="dendro",
             reaction_type=reaction,
             multiplier=Multiplier(atk=scaler1, em=scaler2),
-            exlude_buffs=dmg_info.exclude_buff,
-        )
-        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
-
-    def skill_E_C6(self, dmg_info: Dmg, reaction=""):
-        """灭净三业·业障除"""
-        calc = self.create_calc()
-        calc.set(
-            value_type="E",
-            elem_type="dendro",
-            reaction_type=reaction,
-            multiplier=Multiplier(atk=200, em=400),
             exlude_buffs=dmg_info.exclude_buff,
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
@@ -128,14 +130,14 @@ class Nahida(Role):
 
     category: str = "后台副C"
     """角色所属的流派，影响圣遗物分数计算"""
-    cate_list: list = ["精通拐", "后台副C"]
+    cate_list: list = ["精通辅助", "后台副C"]
     """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
         match self.category:
-            case "精通拐":
+            case "精通辅助":
                 return ["充能", "精通"]
             case "后台副C":
                 return ["攻击%", "草伤", "暴击", "暴伤", "充能", "精通"]
@@ -178,6 +180,7 @@ class Nahida(Role):
                         source=f"{self.name}-C2",
                         name="正等善见之根",
                         buff_range="all",
+                        setting=BuffSetting(label=labels.get("正等善见之根", "○")),
                     )
                 )
                 if self.info.constellation >= 4:
@@ -235,6 +238,7 @@ class Nahida(Role):
                 index=1,
                 source="T1",
                 name="净善摄受明论",
+                value_type="B",
                 dsc="摩耶之殿领域内额外精通",
                 weight=weights.get("净善摄受明论", 0),
                 exclude_buff=ex_buffs.get("净善摄受明论", []),
@@ -243,7 +247,7 @@ class Nahida(Role):
                 index=2,
                 source="E",
                 name="所闻遍计",
-                dsc="E灭净三业每次",
+                dsc="E灭净三业",
                 weight=weights.get("所闻遍计", 0),
                 exclude_buff=ex_buffs.get("所闻遍计", []),
             ),
@@ -251,7 +255,7 @@ class Nahida(Role):
                 index=3,
                 source="E",
                 name="所闻遍计-激化",
-                dsc="E灭净三业每次激化",
+                dsc="E灭净三业激化",
                 weight=weights.get("所闻遍计-激化", 0),
                 exclude_buff=ex_buffs.get("所闻遍计-激化", []),
             ),
@@ -261,10 +265,10 @@ class Nahida(Role):
                 Dmg(
                     index=4,
                     source="E",
-                    name="灭净三业·业障除",
-                    dsc="E每次激化",
-                    weight=weights.get("灭净三业·业障除", 0),
-                    exclude_buff=ex_buffs.get("灭净三业·业障除", []),
+                    name="大辨圆成之实",
+                    dsc="E灭净三业·业障除激化",
+                    weight=weights.get("大辨圆成之实", 0),
+                    exclude_buff=ex_buffs.get("大辨圆成之实", []),
                 )
             )
 
@@ -279,20 +283,20 @@ class Nahida(Role):
                         self.skill_E(dmg)
                     case "所闻遍计-激化":
                         self.skill_E(dmg, "蔓激化")
-                    case "灭净三业·业障除":
-                        self.skill_E_C6(dmg, "蔓激化")
+                    case "大辨圆成之实":
+                        self.Conste_C6(dmg, "蔓激化")
         return self.dmg_list
 
     def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
         match self.category:
-            case "精通拐":
+            case "精通辅助":
                 return {
                     "充能效率阈值": 180,
                     "净善摄受明论": 10,
                     "所闻遍计": -1,
                     "所闻遍计-激化": 0,
-                    "灭净三业·业障除": 0,
+                    "大辨圆成之实": 0,
                 }
             case "后台副C":
                 return {
@@ -300,7 +304,7 @@ class Nahida(Role):
                     "净善摄受明论": 0,
                     "所闻遍计": -1,
                     "所闻遍计-激化": 10,
-                    "灭净三业·业障除": 10,
+                    "大辨圆成之实": 10,
                 }
             case _:
                 return {
@@ -308,5 +312,5 @@ class Nahida(Role):
                     "净善摄受明论": 0,
                     "所闻遍计": -1,
                     "所闻遍计-激化": 10,
-                    "灭净三业·业障除": 10,
+                    "大辨圆成之实": 10,
                 }

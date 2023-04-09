@@ -55,41 +55,81 @@ class Yoimiya(Role):
             elem_dmg_bonus=DmgBonus(pyro=0.25),
         )
 
-    # TODO:
     def skill_A(self, dmg_info: Dmg, reaction=""):
         """烟火打扬"""
         calc = self.create_calc()
-        scaler = float(
-            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "一段伤害").replace("%", "")
+        scaler1 = float(
+            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "一段伤害").replace(
+                "%*2", ""
+            )
         )
+        scaler2 = float(
+            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "二段伤害").replace("%", "")
+        )
+        scaler3 = float(
+            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "三段伤害").replace("%", "")
+        )
+        scaler4 = float(
+            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "四段伤害").replace(
+                "%*2", ""
+            )
+        )
+        scaler5 = float(
+            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "五段伤害").replace("%", "")
+        )
+        scaler_rea = scaler1 + scaler3 + scaler5
+        scaler = scaler1 + scaler2 + scaler4 * 2
         calc.set(
             value_type="NA",
             elem_type="pyro",
             reaction_type=reaction,
-            multiplier=Multiplier(atk=scaler * self.E_mul / 100),
+            multiplier=Multiplier(atk=scaler_rea * self.E_mul),
             exlude_buffs=dmg_info.exclude_buff,
         )
-        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
-        
+        exp_value1, crit_value1 = calc.calc_dmg.get_dmg()
 
-    E_mul: float = 100
+        calc.set(
+            value_type="NA",
+            elem_type="pyro",
+            multiplier=Multiplier(atk=scaler * self.E_mul),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        exp_value2, crit_value2 = calc.calc_dmg.get_dmg()
+        dmg_info.exp_value, dmg_info.crit_value = (
+            exp_value1 + exp_value2,
+            crit_value1 + crit_value2,
+        )
+
+    E_mul: float = 1
     """焰硝庭火舞对普攻倍率乘数"""
 
     def buff_E(self, buff_info: BuffInfo):
         """焰硝庭火舞"""
-        self.E_mul = float(
-            self.get_scaler("焰硝庭火舞", self.talents[1].level, "炽焰箭伤害").replace(
-                "%普通攻击伤害", ""
+        self.E_mul = (
+            float(
+                self.get_scaler("焰硝庭火舞", self.talents[1].level, "炽焰箭伤害").replace(
+                    "%普通攻击伤害", ""
+                )
             )
+            / 100
         )
         buff_info.buff = Buff(
-            dsc=f"施放焰硝庭火舞，普攻倍率×{self.E_mul}%",
+            dsc=f"施放焰硝庭火舞，普攻倍率×{self.E_mul:1%}",
         )
+
+    category: str = "蒸宵"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["蒸宵", "纯火宵"]
+    """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "蒸宵":
+                return ["攻击", "攻击%", "火伤", "暴击", "暴伤", "精通"]
+            case "纯火宵":
+                return ["攻击", "攻击%", "火伤", "暴击", "暴伤"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -188,9 +228,9 @@ class Yoimiya(Role):
                         self.skill_A(dmg, "")
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
             case _:
                 return {
                     "充能效率阈值": 100,
