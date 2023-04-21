@@ -1,4 +1,4 @@
-from ..classmodel import Dmg, Buff, BuffInfo, DmgBonus, Multiplier
+from ..classmodel import Buff, BuffInfo, BuffSetting, Dmg, DmgBonus, Multiplier
 from ._model import Role
 
 
@@ -7,6 +7,8 @@ class Klee(Role):
 
     def buff_T1(self, buff_info: BuffInfo):
         """砰砰礼物"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="拥有爆裂火花时，重击增伤+50%",
             target="CA",
@@ -15,6 +17,8 @@ class Klee(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """破破弹片"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="诡雷命中10秒内，减防+23%",
             def_reduction=0.23,
@@ -22,6 +26,8 @@ class Klee(Role):
 
     def buff_C6(self, buff_info: BuffInfo):
         """火力全开"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="施放轰轰火花25秒内，所有角色火伤+10%",
             elem_dmg_bonus=DmgBonus(pyro=0.1),
@@ -40,11 +46,7 @@ class Klee(Role):
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
-        self.em_flag = (
-            True if reaction == "蒸发" and dmg_info.weight > 0 else self.em_flag
-        )
-        dmg_info.exp_value = int(calc.calc_dmg.get_amp_reac_dmg("exp"))
-        dmg_info.crit_value = int(calc.calc_dmg.get_amp_reac_dmg("crit"))
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
     def skill_E(self, dmg_info: Dmg):
         """蹦蹦炸弹"""
@@ -58,8 +60,7 @@ class Klee(Role):
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
-        dmg_info.exp_value = int(calc.calc_dmg.get_amp_reac_dmg("exp"))
-        dmg_info.crit_value = int(calc.calc_dmg.get_amp_reac_dmg("crit"))
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
     def skill_Q(self, dmg_info: Dmg):
         """轰轰火花"""
@@ -73,19 +74,21 @@ class Klee(Role):
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
-        dmg_info.exp_value = int(calc.calc_dmg.get_amp_reac_dmg("exp"))
-        dmg_info.crit_value = int(calc.calc_dmg.get_amp_reac_dmg("crit"))
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    em_flag = False
-    """蒸可"""
+    category: str = "纯火可莉"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["纯火可莉", "蒸可"]
+    """可选流派"""
 
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        props = ["atk", "atk_per", "pyro", "crit", "crit_hurt"]
-        if self.em_flag:
-            props.append("elem_ma")
-        return props
+        match self.category:
+            case "纯火可莉":
+                return ["攻击", "攻击%", "火伤", "暴击", "暴伤"]
+            case "蒸可":
+                return ["攻击", "攻击%", "火伤", "暴击", "暴伤", "精通"]
 
     def setting(self, labels: dict) -> list[BuffInfo]:
         """增益设置"""
@@ -96,6 +99,7 @@ class Klee(Role):
                 BuffInfo(
                     source=f"{self.name}-T1",
                     name="砰砰礼物",
+                    setting=BuffSetting(label=labels.get("砰砰礼物", "○")),
                 )
             )
         # 命座
@@ -105,6 +109,7 @@ class Klee(Role):
                     source=f"{self.name}-C2",
                     name="破破弹片",
                     buff_range="all",
+                    setting=BuffSetting(label=labels.get("破破弹片", "○")),
                 )
             )
             if self.info.constellation >= 6:
@@ -114,6 +119,7 @@ class Klee(Role):
                         name="火力全开",
                         buff_range="all",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("火力全开", "○")),
                     )
                 )
         return output
@@ -149,7 +155,7 @@ class Klee(Role):
                 index=2,
                 source="A",
                 name="砰砰-蒸发",
-                dsc="A重击",
+                dsc="A重击蒸发",
                 weight=weights.get("砰砰-蒸发", 0),
                 exclude_buff=ex_buffs.get("砰砰-蒸发", []),
             ),
@@ -186,9 +192,25 @@ class Klee(Role):
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "纯火可莉":
+                return {
+                    "充能效率阈值": 100,
+                    "砰砰": 10,
+                    "砰砰-蒸发": 0,
+                    "蹦蹦炸弹": 10,
+                    "轰轰火花": 10,
+                }
+            case "蒸可":
+                return {
+                    "充能效率阈值": 100,
+                    "砰砰": 0,
+                    "砰砰-蒸发": 10,
+                    "蹦蹦炸弹": 0,
+                    "轰轰火花": 0,
+                }
             case _:
                 return {
                     "充能效率阈值": 100,

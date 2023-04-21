@@ -15,6 +15,8 @@ class Eula(Role):
 
     def buff_C1(self, buff_info: BuffInfo):
         """光潮的幻象"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="消耗冷酷之心，物伤+30%，持续6秒可延长",
             elem_dmg_bonus=DmgBonus(phy=0.3),
@@ -22,11 +24,29 @@ class Eula(Role):
 
     def buff_C4(self, buff_info: BuffInfo):
         """自卑者的逞强"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="对生命低于50%的敌人，光降之剑增伤+25%",
             target="Q",
             dmg_bonus=0.25,
         )
+
+    def skill_A(self, dmg_info: Dmg):
+        """西风剑术·宗室"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("普通攻击·西风剑术·宗室", self.talents[0].level, "一段伤害").replace(
+                "%", ""
+            )
+        )
+        calc.set(
+            value_type="NA",
+            elem_type="phy",
+            multiplier=Multiplier(atk=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
     def buff_E1(self, buff_info: BuffInfo):
         """冰潮的涡旋·冷酷之心"""
@@ -43,6 +63,8 @@ class Eula(Role):
 
     def buff_E2(self, buff_info: BuffInfo):
         """冰潮的涡旋-减抗"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         scaler = float(
             self.get_scaler("冰潮的涡旋", self.talents[1].level, "物理抗性降低").replace("%", "")
         )
@@ -82,10 +104,17 @@ class Eula(Role):
             multiplier=Multiplier(atk=scaler * s),
         )
 
+    category: str = "站场物理C"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["站场物理C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "站场物理C":
+                return ["攻击", "攻击%", "物伤", "暴击", "暴伤"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -98,6 +127,7 @@ class Eula(Role):
                     source=f"{self.name}-C1",
                     name="光潮的幻象",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("光潮的幻象", "○")),
                 )
             )
             if self.info.constellation >= 4:
@@ -105,6 +135,7 @@ class Eula(Role):
                     BuffInfo(
                         source=f"{self.name}-C4",
                         name="自卑者的逞强",
+                        setting=BuffSetting(label=labels.get("自卑者的逞强", "○")),
                     )
                 )
         # 技能
@@ -124,6 +155,7 @@ class Eula(Role):
                 source=f"{self.name}-E",
                 name="冰潮的涡旋-减抗",
                 buff_range="all",
+                setting=BuffSetting(label=labels.get("冰潮的涡旋", "○")),
             )
         )
         output.append(
@@ -165,6 +197,14 @@ class Eula(Role):
             ),
             Dmg(
                 index=1,
+                source="A",
+                name="西风剑术·宗室",
+                dsc="A首段",
+                weight=weights.get("西风剑术·宗室", 0),
+                exclude_buff=ex_buffs.get("西风剑术·宗室", []),
+            ),
+            Dmg(
+                index=2,
                 source="Q",
                 name="凝浪之光剑",
                 dsc="Q光降之剑",
@@ -178,15 +218,24 @@ class Eula(Role):
         for dmg in self.dmg_list:
             if dmg.weight != 0:
                 match dmg.name:
+                    case "西风剑术·宗室":
+                        self.skill_A(dmg)
                     case "凝浪之光剑":
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "站场物理C":
+                return {
+                    "充能效率阈值": 120,
+                    "西风剑术·宗室": 10,
+                    "凝浪之光剑": 10,
+                }
             case _:
                 return {
-                    "充能效率阈值": 100,
+                    "充能效率阈值": 120,
+                    "西风剑术·宗室": 10,
                     "凝浪之光剑": 10,
                 }

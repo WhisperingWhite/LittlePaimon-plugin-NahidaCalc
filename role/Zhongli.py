@@ -177,7 +177,7 @@ class Zhongli(Role):
                 index=1,
                 source="A",
                 name="岩雨",
-                dsc="A一轮普攻五段",
+                dsc="A一轮普攻前五段",
                 weight=weights.get("岩雨", 0),
                 exclude_buff=ex_buffs.get("岩雨", []),
             ),

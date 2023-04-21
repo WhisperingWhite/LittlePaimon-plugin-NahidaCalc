@@ -1,4 +1,4 @@
-from ..classmodel import Buff, BuffInfo, Dmg, DmgBonus, Multiplier
+from ..classmodel import Buff, BuffInfo, BuffSetting, Dmg, DmgBonus, Multiplier
 from ..dmg_calc import DmgCalc
 from ._model import Role
 
@@ -27,6 +27,8 @@ class Yae(Role):
 
     def buff_C4(self, buff_info: BuffInfo):
         """绯樱引雷章"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="杀生樱命中5秒内，全队雷伤+20%",
             elem_dmg_bonus=DmgBonus(electro=0.2),
@@ -40,7 +42,7 @@ class Yae(Role):
             def_piercing=0.6,
         )
 
-    def skill_E(self, dmg_info: Dmg):
+    def skill_E(self, dmg_info: Dmg, reaction=""):
         """野干役咒·杀生樱"""
         calc = self.create_calc()
         scaler1, scaler2 = [
@@ -56,15 +58,42 @@ class Yae(Role):
         calc.set(
             value_type="E",
             elem_type="electro",
+            reaction_type=reaction,
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    def skill_Q(self, dmg_info: Dmg, reaction=""):
+        """大密法·天狐显真"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("大密法·天狐显真", self.talents[2].level, "天狐霆雷伤害").replace(
+                "%", ""
+            )
+        )
+        calc.set(
+            value_type="Q",
+            elem_type="electro",
+            reaction_type=reaction,
+            multiplier=Multiplier(atk=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    category: str = "激化狐"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["激化狐", "纯雷狐"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "激化狐":
+                return ["攻击", "攻击%", "雷伤", "暴击", "暴伤", "精通", "充能"]
+            case "纯雷狐":
+                return ["攻击", "攻击%", "雷伤", "暴击", "暴伤", "精通", "充能"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -92,6 +121,7 @@ class Yae(Role):
                         name="绯樱引雷章",
                         buff_range="all",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("绯樱引雷章", "○")),
                     )
                 )
                 if self.info.constellation >= 6:
@@ -126,11 +156,35 @@ class Yae(Role):
             ),
             Dmg(
                 index=1,
-                source="Q",
+                source="E",
                 name="野干役咒·杀生樱",
-                dsc="Q梦想一刀",
+                dsc="E杀生樱每段",
                 weight=weights.get("野干役咒·杀生樱", 0),
                 exclude_buff=ex_buffs.get("野干役咒·杀生樱", []),
+            ),
+            Dmg(
+                index=2,
+                source="E",
+                name="野干役咒·杀生樱-激化",
+                dsc="E杀生樱每段激化",
+                weight=weights.get("野干役咒·杀生樱-激化", 0),
+                exclude_buff=ex_buffs.get("野干役咒·杀生樱-激化", []),
+            ),
+            Dmg(
+                index=3,
+                source="Q",
+                name="大密法·天狐显真",
+                dsc="Q天狐霆雷",
+                weight=weights.get("大密法·天狐显真", 0),
+                exclude_buff=ex_buffs.get("大密法·天狐显真", []),
+            ),
+            Dmg(
+                index=4,
+                source="E",
+                name="大密法·天狐显真-激化",
+                dsc="Q天狐霆雷激化",
+                weight=weights.get("大密法·天狐显真-激化", 0),
+                exclude_buff=ex_buffs.get("大密法·天狐显真-激化", []),
             ),
         ]
 
@@ -141,13 +195,38 @@ class Yae(Role):
                 match dmg.name:
                     case "野干役咒·杀生樱":
                         self.skill_E(dmg)
+                    case "野干役咒·杀生樱-激化":
+                        self.skill_E(dmg, "超激化")
+                    case "大密法·天狐显真":
+                        self.skill_Q(dmg)
+                    case "大密法·天狐显真-激化":
+                        self.skill_Q(dmg, "超激化")
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "激化狐":
+                return {
+                    "充能效率阈值": 140,
+                    "野干役咒·杀生樱": 0,
+                    "野干役咒·杀生樱-激化": 10,
+                    "大密法·天狐显真": 0,
+                    "大密法·天狐显真-激化": 10,
+                }
+            case "纯雷狐":
+                return {
+                    "充能效率阈值": 140,
+                    "野干役咒·杀生樱": 10,
+                    "野干役咒·杀生樱-激化": 0,
+                    "大密法·天狐显真": 10,
+                    "大密法·天狐显真-激化": 0,
+                }
             case _:
                 return {
-                    "充能效率阈值": 100,
-                    "野干役咒·杀生樱": 10,
+                    "充能效率阈值": 140,
+                    "野干役咒·杀生樱": -1,
+                    "野干役咒·杀生樱-激化": 10,
+                    "大密法·天狐显真": -1,
+                    "大密法·天狐显真-激化": 10,
                 }

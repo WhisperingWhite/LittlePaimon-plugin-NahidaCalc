@@ -30,6 +30,8 @@ class Wanderer(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """二番·箙岛月白浪"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="优风倾姿状态下，依据消耗的空居力，狂言·式乐五番最大增伤+200%",
             target="Q",
@@ -42,11 +44,65 @@ class Wanderer(Role):
             dsc="拾玉得花元素效果上限提升为3种",
         )
 
+    def skill_A1(self, dmg_info: Dmg):
+        """行幡鸣弦·普攻"""
+        calc = self.create_calc()
+        scaler1, scaler2 = [
+            float(i.replace("%", "")) / 100
+            for i in self.get_scaler(
+                "普通攻击·行幡鸣弦",
+                self.talents[0].level,
+                "一段伤害",
+                "二段伤害",
+            )
+        ]
+        calc.set(
+            value_type="NA",
+            elem_type="anemo",
+            multiplier=Multiplier(atk=(scaler1 + scaler2) * self.E_NA_scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    def skill_A2(self, dmg_info: Dmg):
+        """行幡鸣弦·重击"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("普通攻击·行幡鸣弦", self.talents[0].level, "重击伤害").replace("%", "")
+        )
+        calc.set(
+            value_type="CA",
+            elem_type="anemo",
+            multiplier=Multiplier(atk=scaler * self.E_CA_scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    E_NA_scaler: float = 1.0
+    """空居·不生断倍率器"""
+    E_CA_scaler: float = 1.0
+    """空居·刀风界倍率器"""
+
+    def buff_E(self, buff_info: BuffInfo):
+        """羽画·风姿华歌"""
+        self.E_NA_scaler, self.E_CA_scaler = [
+            float(i.replace("%", "")) / 100
+            for i in self.get_scaler(
+                "羽画·风姿华歌",
+                self.talents[1].level,
+                "空居·不生断伤害",
+                "空居·刀风界伤害",
+            )
+        ]
+        buff_info.buff = Buff(
+            dsc="进入「优风倾姿」状态，普攻倍率x{self.E_NA_scaler:.1%}，重击倍率x{self.E_CA_scaler:.1%}",
+        )
+
     def skill_Q(self, dmg_info: Dmg):
         """狂言·式乐五番"""
         calc = self.create_calc()
         scaler = float(
-            self.get_scaler("狂言·式乐五番", self.talents[2].level, "技能伤害").replace("%", "")
+            self.get_scaler("狂言·式乐五番", self.talents[2].level, "技能伤害").replace("%×5", "")
         )
         calc.set(
             value_type="Q",
@@ -56,10 +112,17 @@ class Wanderer(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    category: str = "站场风C"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["站场风C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "站场风C":
+                return ["攻击", "攻击%", "风伤", "暴击", "暴伤"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -83,6 +146,7 @@ class Wanderer(Role):
                 BuffInfo(
                     source=f"{self.name}-C2",
                     name="二番·箙岛月白浪",
+                    setting=BuffSetting(label=labels.get("二番·箙岛月白浪", "○")),
                 )
             )
             if self.info.constellation >= 4:
@@ -92,6 +156,13 @@ class Wanderer(Role):
                         name="四番·花月歌浮舟",
                     )
                 )
+        # 技能
+        output.append(
+            BuffInfo(
+                source=f"{self.name}-E",
+                name="羽画·风姿华歌",
+            )
+        )
         return output
 
     def buff(self, buff_list: list[BuffInfo], prop):
@@ -104,6 +175,8 @@ class Wanderer(Role):
                     self.buff_C2(buff)
                 case "四番·花月歌浮舟":
                     self.buff_C4(buff)
+                case "羽画·风姿华歌":
+                    self.buff_E(buff)
 
     def weight(self, weights: dict, ex_buffs: dict):
         """伤害权重"""
@@ -115,9 +188,25 @@ class Wanderer(Role):
             ),
             Dmg(
                 index=1,
+                source="A",
+                name="行幡鸣弦·普攻",
+                dsc="空居·不生断前两段",
+                weight=weights.get("行幡鸣弦·普攻", 0),
+                exclude_buff=ex_buffs.get("行幡鸣弦·普攻", []),
+            ),
+            Dmg(
+                index=1,
+                source="A",
+                name="行幡鸣弦·重击",
+                dsc="空居·刀风界",
+                weight=weights.get("行幡鸣弦·重击", 0),
+                exclude_buff=ex_buffs.get("行幡鸣弦·重击", []),
+            ),
+            Dmg(
+                index=2,
                 source="Q",
                 name="狂言·式乐五番",
-                dsc="Q总爆发",
+                dsc="Q每段",
                 weight=weights.get("狂言·式乐五番", 0),
                 exclude_buff=ex_buffs.get("狂言·式乐五番", []),
             ),
@@ -128,15 +217,21 @@ class Wanderer(Role):
         for dmg in self.dmg_list:
             if dmg.weight != 0:
                 match dmg.name:
+                    case "行幡鸣弦·普攻":
+                        self.skill_A1(dmg)
+                    case "行幡鸣弦·重击":
+                        self.skill_A2(dmg)
                     case "狂言·式乐五番":
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
-            case _:
+        match self.category:
+            case "站场风C":
                 return {
                     "充能效率阈值": 100,
+                    "行幡鸣弦·普攻": 10,
+                    "行幡鸣弦·重击": 10,
                     "狂言·式乐五番": 10,
                 }

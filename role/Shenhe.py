@@ -16,6 +16,8 @@ class Shenhe(Role):
 
     def buff_T1(self, buff_info: BuffInfo):
         """大洞弥罗尊法"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="神女遣灵真诀的领域中，冰伤+15%",
             elem_dmg_bonus=DmgBonus(cryo=0.15),
@@ -42,6 +44,8 @@ class Shenhe(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """定蒙"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="神女遣灵真诀的领域中，冰元素伤害的暴伤+15%",
             crit_rate=0.15,
@@ -62,6 +66,8 @@ class Shenhe(Role):
 
     def buff_E(self, buff_info: BuffInfo, prop: DmgCalc):
         """仰灵威召将役咒·冰翎"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         scaler = float(
             self.get_scaler("仰灵威召将役咒", self.talents[1].level, "伤害值提升").replace("%", "")
         )
@@ -71,16 +77,6 @@ class Shenhe(Role):
             fix_value=FixValue(dmg=extra_dmg),
         )
 
-    def buff_Q(self, buff_info: BuffInfo):
-        """神女遣灵真诀·「箓灵」"""
-        scaler = float(
-            self.get_scaler("神女遣灵真诀", self.talents[2].level, "抗性降低").replace("%", "")
-        )
-        buff_info.buff = Buff(
-            dsc=f"「箓灵」结成领域中，敌人的冰抗与物抗-{scaler}%",
-            resist_reduction=DmgBonus(phy=scaler / 100, cryo=scaler / 100),
-        )
-
     def skill_E(self, dmg_info: Dmg):
         """仰灵威召将役咒·冰翎"""
         calc = self.create_calc()
@@ -88,6 +84,18 @@ class Shenhe(Role):
             self.get_scaler("仰灵威召将役咒", self.talents[1].level, "伤害值提升").replace("%", "")
         )
         dmg_info.exp_value = calc.calc_dmg.atk * scaler
+
+    def buff_Q(self, buff_info: BuffInfo):
+        """神女遣灵真诀·「箓灵」"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
+        scaler = float(
+            self.get_scaler("神女遣灵真诀", self.talents[2].level, "抗性降低").replace("%", "")
+        )
+        buff_info.buff = Buff(
+            dsc=f"「箓灵」结成领域中，敌人的冰抗与物抗-{scaler}%",
+            resist_reduction=DmgBonus(phy=scaler / 100, cryo=scaler / 100),
+        )
 
     def skill_Q(self, dmg_info: Dmg):
         """神女遣灵真诀"""
@@ -103,10 +111,19 @@ class Shenhe(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    category: str = "冰增益辅助"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["冰增益辅助", "冰副C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "冰增益辅助":
+                return ["攻击", "攻击%", "充能"]
+            case "冰副C":
+                return ["攻击", "攻击%", "冰伤", "暴击", "暴伤", "充能"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -119,6 +136,7 @@ class Shenhe(Role):
                     name="大洞弥罗尊法",
                     buff_range="active",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("大洞弥罗尊法", "○")),
                 )
             )
             if self.info.ascension >= 4:
@@ -140,6 +158,7 @@ class Shenhe(Role):
                     source=f"{self.name}-C2",
                     name="定蒙",
                     buff_range="active",
+                    setting=BuffSetting(label=labels.get("定蒙", "○")),
                 )
             )
             if self.info.constellation >= 4:
@@ -158,7 +177,7 @@ class Shenhe(Role):
                 source=f"{self.name}-E",
                 name="仰灵威召将役咒·冰翎",
                 buff_range="all",
-                buff_type="transbuff",
+                setting=BuffSetting(label=labels.get("仰灵威召将役咒·冰翎", "○")),
             )
         )
         output.append(
@@ -166,6 +185,7 @@ class Shenhe(Role):
                 source=f"{self.name}-Q",
                 name="神女遣灵真诀·「箓灵」",
                 buff_range="all",
+                setting=BuffSetting(label=labels.get("神女遣灵真诀·「箓灵」", "○")),
             )
         )
         return output
@@ -225,9 +245,21 @@ class Shenhe(Role):
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "冰增益辅助":
+                return {
+                    "充能效率阈值": 200,
+                    "仰灵威召将役咒·冰翎": 10,
+                    "神女遣灵真诀": 0,
+                }
+            case "冰副C":
+                return {
+                    "充能效率阈值": 200,
+                    "仰灵威召将役咒·冰翎": 5,
+                    "神女遣灵真诀": 10,
+                }
             case _:
                 return {
                     "充能效率阈值": 200,

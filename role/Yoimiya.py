@@ -43,6 +43,8 @@ class Yoimiya(Role):
 
     def buff_C1(self, buff_info: BuffInfo):
         """赤玉琉金"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="击败琉金火光影响下的敌方15秒内，攻击力+20%",
             atk=PoFValue(percent=0.2),
@@ -50,6 +52,8 @@ class Yoimiya(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """万灯送火"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="火元素伤害暴击6秒内，火伤+25%",
             elem_dmg_bonus=DmgBonus(pyro=0.25),
@@ -58,25 +62,18 @@ class Yoimiya(Role):
     def skill_A(self, dmg_info: Dmg, reaction=""):
         """烟火打扬"""
         calc = self.create_calc()
-        scaler1 = float(
-            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "一段伤害").replace(
-                "%*2", ""
+        scaler1, scaler2, scaler3, scaler4, scaler5 = [
+            float(num.replace("%", "").replace("*2", ""))
+            for num in self.get_scaler(
+                "普通攻击·烟火打扬",
+                self.talents[0].level,
+                "一段伤害",
+                "二段伤害",
+                "三段伤害",
+                "四段伤害",
+                "五段伤害",
             )
-        )
-        scaler2 = float(
-            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "二段伤害").replace("%", "")
-        )
-        scaler3 = float(
-            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "三段伤害").replace("%", "")
-        )
-        scaler4 = float(
-            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "四段伤害").replace(
-                "%*2", ""
-            )
-        )
-        scaler5 = float(
-            self.get_scaler("普通攻击·烟火打扬", self.talents[0].level, "五段伤害").replace("%", "")
-        )
+        ]
         scaler_rea = scaler1 + scaler3 + scaler5
         scaler = scaler1 + scaler2 + scaler4 * 2
         calc.set(
@@ -167,6 +164,7 @@ class Yoimiya(Role):
                     source=f"{self.name}-C1",
                     name="赤玉琉金",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("赤玉琉金", "○")),
                 )
             )
             if self.info.constellation >= 2:
@@ -175,6 +173,7 @@ class Yoimiya(Role):
                         source=f"{self.name}-C2",
                         name="万灯送火",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("万灯送火", "○")),
                     )
                 )
         # 技能
@@ -217,6 +216,14 @@ class Yoimiya(Role):
                 weight=weights.get("烟火打扬", 0),
                 exclude_buff=ex_buffs.get("烟火打扬", []),
             ),
+            Dmg(
+                index=1,
+                source="A",
+                name="烟火打扬-蒸发",
+                dsc="A一轮五段蒸发",
+                weight=weights.get("烟火打扬-蒸发", 0),
+                exclude_buff=ex_buffs.get("烟火打扬-蒸发", []),
+            ),
         ]
 
     def dmg(self) -> list[Dmg]:
@@ -224,15 +231,30 @@ class Yoimiya(Role):
         for dmg in self.dmg_list:
             if dmg.weight != 0:
                 match dmg.name:
-                    case "烟火打扬-蒸发":
+                    case "烟火打扬":
                         self.skill_A(dmg, "")
+                    case "烟火打扬-蒸发":
+                        self.skill_A(dmg, "蒸发")
         return self.dmg_list
 
     def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
         match self.category:
+            case "蒸宵":
+                return {
+                    "充能效率阈值": 100,
+                    "烟火打扬": 0,
+                    "烟火打扬-蒸发": 10,
+                }
+            case "纯火宵":
+                return {
+                    "充能效率阈值": 100,
+                    "烟火打扬": 10,
+                    "烟火打扬-蒸发": 0,
+                }
             case _:
                 return {
                     "充能效率阈值": 100,
+                    "烟火打扬": -1,
                     "烟火打扬-蒸发": 10,
                 }

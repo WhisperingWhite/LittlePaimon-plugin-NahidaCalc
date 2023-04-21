@@ -33,6 +33,8 @@ class Xiao(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """空劫·虚空华开敷变"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="处于后台时，充能+25%",
             recharge=0.25,
@@ -40,6 +42,8 @@ class Xiao(Role):
 
     def buff_C4(self, buff_info: BuffInfo):
         """神通·诸苦灭尽"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="生命值低于50％，防御+100%",
             defense=PoFValue(percent=1),
@@ -48,13 +52,30 @@ class Xiao(Role):
     def skill_A(self, dmg_info: Dmg):
         """卷积微尘"""
         calc = self.create_calc()
-        _, scaler = float(
-            self.get_scaler("普通攻击·卷积微尘", self.talents[0].level, "低空/高空坠地冲击伤害")
+        _, scaler = [
+            float(num)
+            for num in self.get_scaler(
+                "普通攻击·卷积微尘", self.talents[0].level, "低空/高空坠地冲击伤害"
+            )
             .replace("%", "")
             .split("/")
-        )
+        ]
         calc.set(
             value_type="PA",
+            elem_type="anemo",
+            multiplier=Multiplier(atk=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    def skill_E(self, dmg_info: Dmg):
+        """风轮两立"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("风轮两立", self.talents[1].level, "技能伤害").replace("%", "")
+        )
+        calc.set(
+            value_type="E",
             elem_type="anemo",
             multiplier=Multiplier(atk=scaler),
             exlude_buffs=dmg_info.exclude_buff,
@@ -74,10 +95,17 @@ class Xiao(Role):
             dmg_bonus=dmg_bonus,
         )
 
+    category: str = "站场主C"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["站场主C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "站场主C":
+                return ["攻击", "攻击%", "风伤", "暴击", "暴伤"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -112,6 +140,7 @@ class Xiao(Role):
                     source=f"{self.name}-C2",
                     name="空劫·虚空华开敷变",
                     buff_type="propbuff",
+                    setting=BuffSetting(label=labels.get("空劫·虚空华开敷变", "○")),
                 )
             )
             if self.info.constellation >= 4:
@@ -120,6 +149,7 @@ class Xiao(Role):
                         source=f"{self.name}-C4",
                         name="神通·诸苦灭尽",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("神通·诸苦灭尽", "○")),
                     )
                 )
         # 技能
@@ -157,10 +187,18 @@ class Xiao(Role):
             Dmg(
                 index=1,
                 source="A",
-                name="卷积微尘-下落",
+                name="卷积微尘",
                 dsc="A高空下落",
-                weight=weights.get("卷积微尘-下落", 0),
-                exclude_buff=ex_buffs.get("卷积微尘-下落", []),
+                weight=weights.get("卷积微尘", 0),
+                exclude_buff=ex_buffs.get("卷积微尘", []),
+            ),
+            Dmg(
+                index=2,
+                source="E",
+                name="风轮两立",
+                dsc="E一段",
+                weight=weights.get("风轮两立", 0),
+                exclude_buff=ex_buffs.get("卷积微尘", []),
             ),
         ]
 
@@ -169,15 +207,24 @@ class Xiao(Role):
         for dmg in self.dmg_list:
             if dmg.weight != 0:
                 match dmg.name:
-                    case "卷积微尘-下落":
+                    case "卷积微尘":
                         self.skill_A(dmg)
+                    case "风轮两立":
+                        self.skill_E(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "站场主C":
+                return {
+                    "充能效率阈值": 120,
+                    "卷积微尘": 10,
+                    "风轮两立": 10,
+                }
             case _:
                 return {
                     "充能效率阈值": 100,
-                    "卷积微尘-下落": 10,
+                    "卷积微尘": 10,
+                    "风轮两立": 10,
                 }

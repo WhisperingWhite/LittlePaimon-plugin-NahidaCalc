@@ -7,6 +7,8 @@ class Albedo(Role):
 
     def buff_T1(self, buff_info: BuffInfo):
         """白垩色的威压"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="对生命低于50%的敌人，刹那之花增伤+25%",
             target="E",
@@ -15,6 +17,8 @@ class Albedo(Role):
 
     def buff_T2(self, buff_info: BuffInfo):
         """瓶中人的天慧"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="释放诞生式·大地之潮10秒内,全队精通+125",
             elem_mastery=125,
@@ -37,6 +41,8 @@ class Albedo(Role):
 
     def buff_C4(self, buff_info: BuffInfo):
         """神性之陨"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="阳华的领域中，场上角色下落增伤+30%",
             target="PA",
@@ -45,6 +51,8 @@ class Albedo(Role):
 
     def buff_C6(self, buff_info: BuffInfo):
         """无垢之土"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="阳华的领域中，在结晶盾庇护下，场上角色增伤+17%",
             dmg_bonus=0.17,
@@ -96,10 +104,17 @@ class Albedo(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
+    category: str = "后台岩C"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["后台岩C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "后台岩C":
+                return ["防御", "防御%", "攻击%", "岩伤", "暴击", "暴伤"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -110,6 +125,7 @@ class Albedo(Role):
                 BuffInfo(
                     source=f"{self.name}-T1",
                     name="白垩色的威压",
+                    setting=BuffSetting(label=labels.get("白垩色的威压", "○")),
                 )
             )
             if self.info.ascension >= 4:
@@ -119,6 +135,7 @@ class Albedo(Role):
                         name="瓶中人的天慧",
                         buff_range="all",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("瓶中人的天慧", "○")),
                     )
                 )
         # 命座
@@ -139,6 +156,8 @@ class Albedo(Role):
                     BuffInfo(
                         source=f"{self.name}-C4",
                         name="神性之陨",
+                        buff_range="all",
+                        setting=BuffSetting(label=labels.get("神性之陨", "○")),
                     )
                 )
                 if self.info.constellation >= 6:
@@ -146,6 +165,8 @@ class Albedo(Role):
                         BuffInfo(
                             source=f"{self.name}-C6",
                             name="无垢之土",
+                            buff_range="all",
+                            setting=BuffSetting(label=labels.get("无垢之土", "○")),
                         )
                     )
         return output
@@ -177,7 +198,7 @@ class Albedo(Role):
                 index=1,
                 source="E",
                 name="创生法·拟造阳华",
-                dsc="刹那之花单段",
+                dsc="E刹那之花单段",
                 weight=weights.get("创生法·拟造阳华", 0),
                 exclude_buff=ex_buffs.get("创生法·拟造阳华", []),
             ),
@@ -212,9 +233,16 @@ class Albedo(Role):
                         self.skill_Q2(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "后台岩C":
+                return {
+                    "充能效率阈值": 100,
+                    "创生法·拟造阳华": 10,
+                    "诞生式·大地之潮": 0,
+                    "诞生式·大地之潮·生灭之花": 0,
+                }
             case _:
                 return {
                     "充能效率阈值": 120,

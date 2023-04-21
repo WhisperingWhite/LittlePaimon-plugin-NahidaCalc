@@ -7,6 +7,8 @@ class Ayato(Role):
 
     def buff_C1(self, buff_info: BuffInfo):
         """镜华风姿"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
             dsc="对于生命值低于50%的敌人，瞬水剑增伤+40%",
             target="NA",
@@ -15,8 +17,10 @@ class Ayato(Role):
 
     def buff_C2(self, buff_info: BuffInfo):
         """世有源泉"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         buff_info.buff = Buff(
-            dsc=f"浪闪叠加上限提升至5层，至少3层浪闪状态下，生命上限+50%(+{self.prop.hp_base*0.5})",
+            dsc=f"浪闪上限提升至5层，至少3层浪闪状态下，生命上限+50%(+{self.prop.hp_base*0.5:.0f})",
             hp=PoFValue(percent=0.5),
         )
         self.max_stack += 1
@@ -44,23 +48,6 @@ class Ayato(Role):
         )
         dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
 
-    def skill_Q(self, dmg_info: Dmg):
-        """神里流·水囿·水花剑"""
-        calc = self.create_calc()
-        scaler = float(
-            self.get_scaler("神里流·水囿", self.talents[2].level, "水花剑伤害").replace("%", "")
-        )
-        calc.set(
-            value_type="Q",
-            elem_type="hydro",
-            multiplier=Multiplier(atk=scaler),
-            exlude_buffs=dmg_info.exclude_buff,
-        )
-        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
-
-    max_stack = 4
-    """浪闪最大层数"""
-
     def buff_E(self, buff_info: BuffInfo):
         """神里流·镜花·浪闪"""
         multip = float(
@@ -80,8 +67,27 @@ class Ayato(Role):
             multiplier=Multiplier(hp=multip * s),
         )
 
+    def skill_Q(self, dmg_info: Dmg):
+        """神里流·水囿·水花剑"""
+        calc = self.create_calc()
+        scaler = float(
+            self.get_scaler("神里流·水囿", self.talents[2].level, "水花剑伤害").replace("%", "")
+        )
+        calc.set(
+            value_type="Q",
+            elem_type="hydro",
+            multiplier=Multiplier(atk=scaler),
+            exlude_buffs=dmg_info.exclude_buff,
+        )
+        dmg_info.exp_value, dmg_info.crit_value = calc.calc_dmg.get_dmg()
+
+    max_stack = 4
+    """浪闪最大层数"""
+
     def buff_Q(self, buff_info: BuffInfo):
         """神里流·水囿"""
+        if buff_info.setting.label == "-":
+            buff_info.setting.state = "×"
         dmg_bonus = float(
             self.get_scaler("神里流·水囿", self.talents[2].level, "普通攻击伤害提升").replace(
                 "%", ""
@@ -93,10 +99,17 @@ class Ayato(Role):
             dmg_bonus=dmg_bonus / 100,
         )
 
+    category: str = "站场水C"
+    """角色所属的流派，影响圣遗物分数计算"""
+    cate_list: list = ["站场水C"]
+    """可选流派"""
+
     @property
     def valid_prop(self) -> list[str]:
         """有效属性"""
-        return []
+        match self.category:
+            case "站场水C":
+                return ["攻击", "攻击%", "水伤", "暴击", "暴伤", "生命%"]
 
     def setting(self, labels: dict = {}) -> list[BuffInfo]:
         """增益设置"""
@@ -107,6 +120,7 @@ class Ayato(Role):
                 BuffInfo(
                     source=f"{self.name}-C1",
                     name="镜华风姿",
+                    setting=BuffSetting(label=labels.get("镜华风姿", "○")),
                 )
             )
             if self.info.constellation >= 2:
@@ -115,6 +129,7 @@ class Ayato(Role):
                         source=f"{self.name}-C2",
                         name="世有源泉",
                         buff_type="propbuff",
+                        setting=BuffSetting(label=labels.get("世有源泉", "○")),
                     )
                 )
         # 技能
@@ -133,6 +148,7 @@ class Ayato(Role):
                 source=f"{self.name}-Q",
                 name="神里流·水囿",
                 buff_range="all",
+                label=labels.get("神里流·水囿", "5"),
             )
         )
         return output
@@ -187,9 +203,15 @@ class Ayato(Role):
                         self.skill_Q(dmg)
         return self.dmg_list
 
-    def weights_init(self, style_name: str = "") -> dict[str, int]:
+    def weights_init(self) -> dict[str, int]:
         """角色出伤流派"""
-        match style_name:
+        match self.category:
+            case "站场水C":
+                return {
+                    "充能效率阈值": 100,
+                    "神里流·镜花·泷廻鉴花": 10,
+                    "神里流·水囿·水花剑": -1,
+                }
             case _:
                 return {
                     "充能效率阈值": 100,
